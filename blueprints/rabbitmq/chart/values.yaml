@@ -1,0 +1,338 @@
+# Full OpenStack-Helm rabbitmq defaults with the blueprint's validated overrides applied
+# (2025.1-ubuntu_jammy images, single-replica, Krateo-CDC-friendly). A small curated
+# subset is overridable per Composition (see values.schema.json).
+conf:
+  aux_conf: {}
+  bind_address: '::'
+  enabled_plugins:
+  - rabbitmq_management
+  - rabbitmq_peer_discovery_k8s
+  - rabbitmq_prometheus
+  feature_flags: default
+  rabbit_additonal_conf:
+    management.listener.ip: '::'
+    management.listener.port: null
+  rabbit_advanced_config:
+    default_consumer_prefetch: 250
+    enabled: false
+  rabbitmq:
+    cluster_formation:
+      k8s:
+        address_type: hostname
+      node_cleanup:
+        interval: '10'
+        only_log_warning: 'true'
+      peer_discovery_backend: rabbit_peer_discovery_k8s
+    cluster_partition_handling: autoheal
+    listeners:
+      tcp:
+        1: null
+    loopback_users.guest: 'false'
+    management.load_definitions: /var/lib/rabbitmq/definitions.json
+    queue_master_locator: min-masters
+  users: {}
+dependencies:
+  dynamic:
+    common:
+      local_image_registry:
+        jobs:
+        - rabbitmq-image-repo-sync
+        services:
+        - endpoint: node
+          service: local_image_registry
+  static:
+    cluster_wait:
+      services:
+      - endpoint: internal
+        service: oslo_messaging
+    image_repo_sync:
+      services:
+      - endpoint: internal
+        service: local_image_registry
+    rabbitmq:
+      jobs: null
+    tests:
+      jobs: cluster_wait
+      services:
+      - endpoint: internal
+        service: oslo_messaging
+endpoints:
+  cluster_domain_suffix: cluster.local
+  kube_dns:
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: kube-dns
+    name: kubernetes-dns
+    namespace: kube-system
+    path:
+      default: null
+    port:
+      dns:
+        default: 53
+        protocol: UDP
+      dns_tcp:
+        default: 53
+    scheme: http
+  local_image_registry:
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: localhost
+      internal: docker-registry
+      node: localhost
+    name: docker-registry
+    namespace: docker-registry
+    port:
+      registry:
+        node: 5000
+  monitoring:
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: prom-metrics
+      public: prometheus
+    name: prometheus
+    namespace: null
+    path:
+      default: null
+    port:
+      api:
+        default: 9090
+        public: 80
+    scheme:
+      default: http
+  oci_image_registry:
+    auth:
+      enabled: false
+      rabbitmq:
+        password: password
+        username: rabbitmq
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: localhost
+    name: oci-image-registry
+    namespace: oci-image-registry
+    port:
+      registry:
+        default: null
+  oslo_messaging:
+    auth:
+      erlang_cookie: openstack-cookie
+      guest:
+        password: password
+      user:
+        password: password
+        username: rabbitmq
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: rabbitmq
+      public: null
+    path: /
+    port:
+      amqp:
+        default: 5672
+      clustering:
+        default: null
+      http:
+        default: 15672
+        public: 80
+      metrics:
+        default: 15692
+    scheme: rabbit
+extraObjects: []
+forceBoot:
+  enabled: false
+images:
+  local_registry:
+    active: false
+    exclude:
+    - dep_check
+    - image_repo_sync
+  pull_policy: IfNotPresent
+  tags:
+    dep_check: quay.io/airshipit/kubernetes-entrypoint:latest-ubuntu_noble
+    image_repo_sync: quay.io/airshipit/docker:27.5.0
+    prometheus_rabbitmq_exporter_helm_tests: quay.io/airshipit/openstack-client:2025.1-ubuntu_jammy
+    rabbitmq: quay.io/airshipit/rabbitmq:3.10.18
+    rabbitmq_init: quay.io/airshipit/openstack-client:2025.1-ubuntu_jammy
+    scripted_test: quay.io/airshipit/rabbitmq:3.10.18-management
+labels:
+  jobs:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  server:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  test:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+manifests:
+  certificates: false
+  config_ipv6: false
+  configmap_bin: true
+  configmap_etc: true
+  ingress_management: true
+  job_cluster_wait: true
+  job_image_repo_sync: true
+  monitoring:
+    prometheus:
+      configmap_bin: false
+  network_policy: false
+  pod_test: false
+  secret_admin_user: true
+  secret_erlang_cookie: true
+  secret_registry: true
+  service: true
+  service_discovery: true
+  service_ingress_management: true
+  statefulset: true
+monitoring:
+  prometheus:
+    enabled: true
+    rabbitmq:
+      scrape: true
+network:
+  host_namespace: false
+  management:
+    ingress:
+      annotations:
+        haproxy.org/path-rewrite: /
+        nginx.ingress.kubernetes.io/rewrite-target: /
+      classes:
+        cluster: ingress-cluster
+        namespace: ingress-openstack
+      public: true
+network_policy:
+  rabbitmq:
+    egress:
+    - {}
+    ingress:
+    - {}
+pod:
+  affinity:
+    anti:
+      topologyKey:
+        default: kubernetes.io/hostname
+      type:
+        default: preferredDuringSchedulingIgnoredDuringExecution
+      weight:
+        default: 10
+  lifecycle:
+    disruption_budget:
+      mariadb:
+        min_available: 0
+    upgrades:
+      deployments:
+        pod_replacement_strategy: RollingUpdate
+        revision_history: 3
+        rolling_update:
+          max_surge: 3
+          max_unavailable: 1
+  probes:
+    rabbitmq:
+      rabbitmq:
+        liveness:
+          enabled: true
+          params:
+            failureThreshold: 5
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+        readiness:
+          enabled: true
+          params:
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+  replicas:
+    server: 1
+  resources:
+    enabled: false
+    jobs:
+      image_repo_sync:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      tests:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+    server:
+      limits:
+        cpu: 500m
+        memory: 128Mi
+      requests:
+        cpu: 500m
+        memory: 128Mi
+  security_context:
+    cluster_wait:
+      container:
+        rabbitmq_cluster_wait:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+        rabbitmq_cookie:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+      pod:
+        runAsUser: 999
+    server:
+      container:
+        rabbitmq:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsUser: 999
+        rabbitmq_cookie:
+          readOnlyRootFilesystem: true
+          runAsUser: 0
+        rabbitmq_password:
+          readOnlyRootFilesystem: true
+          runAsUser: 0
+        rabbitmq_perms:
+          readOnlyRootFilesystem: true
+          runAsUser: 0
+      pod:
+        runAsUser: 999
+    test:
+      container:
+        rabbitmq_test:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+      pod:
+        runAsUser: 999
+  tolerations:
+    rabbitmq:
+      enabled: false
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+secrets:
+  oci_image_registry:
+    rabbitmq: rabbitmq-oci-image-registry-key
+  tls:
+    oslo_messaging:
+      server:
+        internal: rabbitmq-tls-direct
+volume:
+  chown_on_start: true
+  class_name: general
+  enabled: false
+  size: 768Mi
+  use_local_path:
+    enabled: true
+    host_path: /var/lib/rabbitmq

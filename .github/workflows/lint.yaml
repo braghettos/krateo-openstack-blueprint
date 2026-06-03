@@ -15,18 +15,11 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
-      - name: Stamp a temporary chart version
-        run: sed -i "s/CHART_VERSION/0.0.0-ci/g" ./chart/Chart.yaml
-
-      - name: Lint
-        run: helm lint ./chart
-
-      - name: Render (default identity profile)
-        run: helm template openstack ./chart --namespace openstack > /dev/null
-
-      - name: Render (all optional components on)
+      - name: Lint and render every blueprint chart
         run: |
-          helm template openstack ./chart --namespace openstack \
-            --set rabbitmq.enabled=true \
-            --set glance.enabled=true \
-            --set horizon.enabled=true > /dev/null
+          for d in blueprints/*/chart; do
+            echo "== $d =="
+            sed -i "s/CHART_VERSION/0.0.0-ci/g" "$d/Chart.yaml"
+            helm lint "$d"
+            helm template release "$d" --namespace openstack > /dev/null
+          done

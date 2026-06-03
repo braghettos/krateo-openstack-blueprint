@@ -1,0 +1,453 @@
+# Full OpenStack-Helm placement defaults with the blueprint's validated overrides applied
+# (2025.1-ubuntu_jammy images, single-replica, Krateo-CDC-friendly). A small curated
+# subset is overridable per Composition (see values.schema.json).
+conf:
+  logging:
+    formatter_context:
+      class: oslo_log.formatters.ContextFormatter
+      datefmt: '%Y-%m-%d %H:%M:%S'
+    formatter_default:
+      datefmt: '%Y-%m-%d %H:%M:%S'
+      format: '%(message)s'
+    formatters:
+      keys:
+      - context
+      - default
+    handler_null:
+      args: ()
+      class: logging.NullHandler
+      formatter: default
+    handler_stderr:
+      args: (sys.stderr,)
+      class: StreamHandler
+      formatter: context
+    handler_stdout:
+      args: (sys.stdout,)
+      class: StreamHandler
+      formatter: context
+    handlers:
+      keys:
+      - stdout
+      - stderr
+      - 'null'
+    logger_amqp:
+      handlers: stderr
+      level: WARNING
+      qualname: amqp
+    logger_amqplib:
+      handlers: stderr
+      level: WARNING
+      qualname: amqplib
+    logger_boto:
+      handlers: stderr
+      level: WARNING
+      qualname: boto
+    logger_eventletwsgi:
+      handlers: stderr
+      level: WARNING
+      qualname: eventlet.wsgi.server
+    logger_placement:
+      handlers:
+      - stdout
+      level: INFO
+      qualname: placement
+    logger_root:
+      handlers: 'null'
+      level: WARNING
+    logger_sqlalchemy:
+      handlers: stderr
+      level: WARNING
+      qualname: sqlalchemy
+    loggers:
+      keys:
+      - root
+      - placement
+  placement:
+    DEFAULT:
+      debug: false
+      log_config_append: /etc/placement/logging.conf
+      use_syslog: false
+    keystone_authtoken:
+      auth_type: password
+      auth_version: v3
+      memcache_security_strategy: ENCRYPT
+      service_token_roles: service
+      service_token_roles_required: true
+      service_type: placement
+    oslo_concurrency:
+      lock_path: /var/lock
+    placement_database:
+      connection: ''
+  placement_api_uwsgi:
+    uwsgi:
+      add-header: 'Connection: close'
+      buffer-size: 65535
+      die-on-term: true
+      enable-threads: true
+      exit-on-reload: false
+      hook-master-start: unix_signal:15 gracefully_kill_them_all
+      lazy-apps: true
+      log-x-forwarded-for: true
+      master: true
+      module: placement.wsgi.api:application
+      processes: 1
+      procname-prefix-spaced: 'placement-api:'
+      route-user-agent: '^kube-probe.* donotlog:'
+      stats: 0.0.0.0:1717
+      stats-http: true
+      thunder-lock: true
+      worker-reload-mercy: 80
+  policy: {}
+dependencies:
+  dynamic:
+    common:
+      local_image_registry:
+        jobs:
+        - image-repo-sync
+        services:
+        - endpoint: node
+          service: local_image_registry
+  static:
+    api:
+      jobs:
+      - placement-db-sync
+      - placement-ks-service
+      - placement-ks-user
+      - placement-ks-endpoints
+    db_drop:
+      services:
+      - endpoint: internal
+        service: oslo_db
+    db_init:
+      services:
+      - endpoint: internal
+        service: oslo_db
+    db_sync:
+      jobs:
+      - placement-db-init
+      services:
+      - endpoint: internal
+        service: oslo_db
+    ks_endpoints:
+      jobs:
+      - placement-ks-user
+      - placement-ks-service
+      services:
+      - endpoint: internal
+        service: identity
+    ks_service:
+      services:
+      - endpoint: internal
+        service: identity
+    ks_user:
+      services:
+      - endpoint: internal
+        service: identity
+endpoints:
+  cluster_domain_suffix: cluster.local
+  identity:
+    auth:
+      admin:
+        password: password
+        project_domain_name: default
+        project_name: admin
+        region_name: RegionOne
+        user_domain_name: default
+        username: admin
+      placement:
+        password: password
+        project_domain_name: service
+        project_name: service
+        region_name: RegionOne
+        role: admin
+        user_domain_name: service
+        username: placement
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: keystone
+      internal: keystone-api
+    name: keystone
+    path:
+      default: /v3
+    port:
+      api:
+        default: 80
+        internal: 5000
+    scheme:
+      default: http
+  local_image_registry:
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: localhost
+      internal: docker-registry
+      node: localhost
+    name: docker-registry
+    namespace: docker-registry
+    port:
+      registry:
+        node: 5000
+  oci_image_registry:
+    auth:
+      enabled: false
+      placement:
+        password: password
+        username: placement
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: localhost
+    name: oci-image-registry
+    namespace: oci-image-registry
+    port:
+      registry:
+        default: null
+  oslo_cache:
+    auth:
+      memcache_secret_key: null
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: memcached
+    port:
+      memcache:
+        default: 11211
+  oslo_db:
+    auth:
+      admin:
+        password: password
+        secret:
+          tls:
+            internal: mariadb-tls-direct
+        username: root
+      nova_api:
+        password: password
+        username: nova
+      placement:
+        password: password
+        username: placement
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: mariadb
+    path: /placement
+    port:
+      mysql:
+        default: 3306
+    scheme: mysql+pymysql
+  placement:
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: placement-api
+      public: placement
+    name: placement
+    path:
+      default: /
+    port:
+      api:
+        default: 8778
+        public: 80
+        service: 8778
+    scheme:
+      default: http
+      service: http
+extraObjects: []
+identity:
+  openrc:
+    exclude_vars: []
+    extra_vars: []
+images:
+  local_registry:
+    active: false
+    exclude:
+    - dep_check
+    - image_repo_sync
+  pull_policy: IfNotPresent
+  tags:
+    db_drop: quay.io/airshipit/openstack-client:2025.1-ubuntu_jammy
+    db_init: quay.io/airshipit/openstack-client:2025.1-ubuntu_jammy
+    dep_check: quay.io/airshipit/kubernetes-entrypoint:latest-ubuntu_noble
+    image_repo_sync: docker.io/docker:17.07.0
+    ks_endpoints: quay.io/airshipit/openstack-client:2025.1-ubuntu_jammy
+    ks_service: quay.io/airshipit/openstack-client:2025.1-ubuntu_jammy
+    ks_user: quay.io/airshipit/openstack-client:2025.1-ubuntu_jammy
+    placement: quay.io/airshipit/placement:2025.1-ubuntu_jammy
+    placement_db_sync: quay.io/airshipit/placement:2025.1-ubuntu_jammy
+labels:
+  api:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  job:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+manifests:
+  certificates: false
+  configmap_bin: true
+  configmap_etc: true
+  deployment: true
+  ingress: true
+  job_db_drop: false
+  job_db_init: true
+  job_db_sync: true
+  job_image_repo_sync: true
+  job_ks_endpoints: true
+  job_ks_service: true
+  job_ks_user: true
+  network_policy: false
+  pdb: true
+  pod_rally_test: false
+  secret_db: true
+  secret_ingress_tls: true
+  secret_keystone: true
+  secret_ks_etc: true
+  secret_registry: true
+  service: true
+  service_ingress: true
+network:
+  api:
+    external_policy_local: false
+    ingress:
+      annotations:
+        haproxy.org/path-rewrite: /
+        nginx.ingress.kubernetes.io/rewrite-target: /
+      classes:
+        cluster: ingress-cluster
+        namespace: ingress-openstack
+      public: true
+    node_port:
+      enabled: false
+      port: 30778
+    port: 8778
+pod:
+  affinity:
+    anti:
+      topologyKey:
+        default: kubernetes.io/hostname
+      type:
+        default: preferredDuringSchedulingIgnoredDuringExecution
+  etcSources:
+    placement: []
+    placement_db_sync: []
+  lifecycle:
+    disruption_budget:
+      api:
+        min_available: 0
+    termination_grace_period:
+      api:
+        timeout: 30
+    upgrades:
+      deployments:
+        pod_replacement_strategy: RollingUpdate
+        revision_history: 3
+        rolling_update:
+          max_surge: 3
+          max_unavailable: 1
+  mounts:
+    placement:
+      init_container: null
+      placement:
+        volumeMounts: null
+        volumes: null
+    placement_db_sync:
+      init_container: null
+      placement_db_sync:
+        volumeMounts: null
+        volumes: null
+  probes:
+    placement:
+      api:
+        liveness:
+          port: 1717
+  replicas:
+    api: 1
+  resources:
+    api:
+      limits:
+        cpu: 2000m
+        memory: 1024Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    enabled: false
+    jobs:
+      db_drop:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      db_init:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      db_sync:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      ks_endpoints:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      ks_service:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      ks_user:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+  security_context:
+    placement:
+      container:
+        placement_api:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+      pod:
+        runAsUser: 42424
+  tolerations:
+    placement:
+      enabled: false
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+release_group: null
+secrets:
+  identity:
+    admin: placement-keystone-admin
+    placement: placement-keystone-user
+  oci_image_registry:
+    placement: placement-oci-image-registry
+  oslo_db:
+    admin: placement-db-admin
+    placement: placement-db-user
+  tls:
+    placement:
+      api:
+        internal: placement-tls-api
+        public: placement-tls-public
+tls:
+  identity: false
+  oslo_db: false
+  oslo_messaging: false

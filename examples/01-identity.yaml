@@ -1,0 +1,38 @@
+# OpenStack identity plane — one Composition per component, all in namespace 'openstack'.
+# OpenStack-Helm's kubernetes-entrypoint dep-checks self-order these by Service/Job name.
+# Apply: kubectl create ns openstack && kubectl apply -f examples/01-identity.yaml
+---
+apiVersion: composition.krateo.io/v0-1-0
+kind: OpenstackMariadb
+metadata:
+  name: openstack-mariadb
+  namespace: openstack
+spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-0
+kind: OpenstackMemcached
+metadata:
+  name: openstack-memcached
+  namespace: openstack
+spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-0
+kind: OpenstackKeystone
+metadata:
+  name: openstack-keystone
+  namespace: openstack
+spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-0
+kind: OpenstackGlance
+metadata:
+  name: openstack-glance
+  namespace: openstack
+spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-0
+kind: OpenstackHorizon
+metadata:
+  name: openstack-horizon
+  namespace: openstack
+spec: {}

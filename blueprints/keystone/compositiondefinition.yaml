@@ -1,0 +1,9 @@
+apiVersion: core.krateo.io/v1alpha1
+kind: CompositionDefinition
+metadata:
+  name: openstack-keystone
+  namespace: openstack-system
+spec:
+  chart:
+    url: oci://ghcr.io/braghettos/charts/openstack-keystone
+    version: "0.1.0"

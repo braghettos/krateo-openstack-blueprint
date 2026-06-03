@@ -1,0 +1,202 @@
+# Full OpenStack-Helm openvswitch defaults with the blueprint's validated overrides applied
+# (2025.1-ubuntu_jammy images, single-replica, Krateo-CDC-friendly). A small curated
+# subset is overridable per Composition (see values.schema.json).
+conf:
+  openvswitch_db_server:
+    ptcp_port: null
+  ovs_dpdk:
+    enabled: false
+  ovs_hw_offload:
+    enabled: false
+  ovs_other_config:
+    handler_threads: null
+    revalidator_threads: null
+  ovs_user_name: openvswitch:openvswitch
+  poststart:
+    extraCommand: null
+    rootUser: root
+    timeout: 5
+dependencies:
+  dynamic:
+    common:
+      local_image_registry:
+        jobs:
+        - openvswitch-image-repo-sync
+        services:
+        - endpoint: node
+          service: local_image_registry
+  static:
+    image_repo_sync:
+      services:
+      - endpoint: internal
+        service: local_image_registry
+    ovs: null
+endpoints:
+  cluster_domain_suffix: cluster.local
+  local_image_registry:
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: localhost
+      internal: docker-registry
+      node: localhost
+    name: docker-registry
+    namespace: docker-registry
+    port:
+      registry:
+        node: 5000
+  oci_image_registry:
+    auth:
+      enabled: false
+      openvswitch:
+        password: password
+        username: openvswitch
+    host_fqdn_override:
+      default: null
+    hosts:
+      default: localhost
+    name: oci-image-registry
+    namespace: oci-image-registry
+    port:
+      registry:
+        default: null
+extraObjects: []
+images:
+  local_registry:
+    active: false
+    exclude:
+    - dep_check
+    - image_repo_sync
+  pull_policy: IfNotPresent
+  tags:
+    dep_check: quay.io/airshipit/kubernetes-entrypoint:latest-ubuntu_noble
+    image_repo_sync: quay.io/airshipit/docker:27.5.0
+    openvswitch_db_server: quay.io/airshipit/openvswitch:latest-ubuntu_noble
+    openvswitch_vswitchd: quay.io/airshipit/openvswitch:latest-ubuntu_noble
+labels:
+  ovs:
+    node_selector_key: openvswitch
+    node_selector_value: enabled
+manifests:
+  configmap_bin: true
+  daemonset: true
+  daemonset_ovs_vswitchd: true
+  job_image_repo_sync: true
+  network_policy: false
+  secret_registry: true
+network_policy:
+  openvswitch:
+    egress:
+    - {}
+    ingress:
+    - {}
+openvswitch:
+  extraContainers: []
+pod:
+  dns_policy: ClusterFirstWithHostNet
+  lifecycle:
+    upgrades:
+      daemonsets:
+        ovs:
+          enabled: true
+          max_unavailable: 1
+          min_ready_seconds: 0
+        pod_replacement_strategy: RollingUpdate
+  probes:
+    ovs:
+      ovs_db:
+        liveness:
+          enabled: true
+          params:
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+        readiness:
+          enabled: true
+          params:
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 5
+      ovs_vswitch:
+        liveness:
+          enabled: true
+          params:
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+        readiness:
+          enabled: true
+          params:
+            failureThreshold: 3
+            periodSeconds: 10
+            timeoutSeconds: 1
+  resources:
+    enabled: false
+    jobs:
+      image_repo_sync:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+    ovs:
+      db:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      vswitchd:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+  security_context:
+    ovs:
+      container:
+        modules:
+          capabilities:
+            add:
+            - SYS_MODULE
+            - SYS_CHROOT
+          readOnlyRootFilesystem: true
+          runAsUser: 0
+        perms:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsUser: 0
+        server:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsUser: 42424
+        vswitchd:
+          capabilities:
+            add:
+            - NET_ADMIN
+          readOnlyRootFilesystem: true
+          runAsUser: 0
+      pod:
+        runAsUser: 42424
+  tini:
+    enabled: true
+  tolerations:
+    openvswitch:
+      enabled: false
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+  user:
+    nova:
+      uid: 42424
+release_group: null
+secrets:
+  oci_image_registry:
+    openvswitch: openvswitch-oci-image-registry-key

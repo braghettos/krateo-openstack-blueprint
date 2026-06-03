@@ -1,141 +1,98 @@
-# Krateo Blueprint — OpenStack
+# Krateo Blueprints — OpenStack
 
-A [Krateo](https://krateo.io) blueprint that installs an **OpenStack identity control
-plane** on a Kubernetes cluster using the upstream
-[OpenStack-Helm](https://opendev.org/openstack/openstack-helm) charts. Once the
-`CompositionDefinition` is applied, **every `OpenstackInstaller` Composition you create
-becomes one OpenStack installation**.
+A set of [Krateo](https://krateo.io) blueprints that install OpenStack on Kubernetes using the
+upstream [OpenStack-Helm](https://opendev.org/openstack/openstack-helm) charts. **OpenStack-Helm
+ships one Helm chart per service**, so this repo provides **one blueprint per chart** — each a
+`CompositionDefinition` whose Compositions install that single component. "One OpenStack
+installation" is then a *set* of Compositions deployed into one namespace.
 
-## How it works
+## Why one blueprint per chart (and not an umbrella)
 
-OpenStack-Helm ships **one chart per service** (keystone, glance, horizon, …) — there is
-no single umbrella and no "all-in-one" chart. So "one OpenStack install" is really an
-ordered *set* of charts. This blueprint bundles them into one self-contained umbrella
-chart, `openstack-installer`, so a single Composition maps to a single install:
+The design rule: *put components in separate blueprints when they are separate Helm charts;
+only merge them into an umbrella blueprint when one blueprint's input depends on another
+blueprint's output.* We verified the OpenStack-Helm charts against that rule:
 
-1. **A self-contained umbrella chart.** `chart/charts/` vendors the OpenStack-Helm
-   subcharts (`mariadb`, `memcached`, `keystone`, and the optional `rabbitmq`, `glance`,
-   `horizon`), each with `helm-toolkit` vendored inside it. Nothing is pulled from the
-   upstream chart repo at install time — the blueprint is fully pinned (OpenStack release
-   **2025.1 "Epoxy"**, `ubuntu_jammy` images).
-2. **A curated `values.schema.json`.** Krateo's `core-provider` builds the Composition CRD
-   **only** from the chart's `chart/values.schema.json` (it never reads `values.yaml`). The
-   subcharts' own schemas are huge and use constructs `crdgen` can't express, so this chart
-   exposes a small, flat, curated schema (component toggles, replica counts, Horizon
-   NodePort) and keeps the working wiring in `values.yaml`.
-3. **A working default profile.** With an empty spec you get the **identity control plane**:
-   `MariaDB + Memcached + Keystone`. Keystone issues Fernet tokens and owns the service
-   catalog. RabbitMQ, Glance and Horizon are optional (off by default).
+- **No input→output dependencies.** Every cross-component reference is **static configuration** —
+  a fixed in-cluster Service DNS name (`keystone`, `mariadb`, `rabbitmq`, …) plus shared static
+  passwords (all default to `password`). No chart reads another's *runtime* output; the
+  helm-toolkit `*_lookup` helpers are compile-time template functions over the static `endpoints`
+  map, not Kubernetes runtime lookups.
+- **Ordering is automatic across compositions.** OpenStack-Helm gates every pod/job on its
+  dependencies via `kubernetes-entrypoint` init-containers that wait on Services/Jobs *by name*.
+  Those names are fixed, so the checks resolve across separate Compositions in the same namespace
+  (e.g. Glance waits for the `keystone-api` Service and `mariadb` regardless of which blueprint
+  created them).
+- **Shared secrets are shared *inputs*, not outputs.** The few cross-cutting secrets (MariaDB
+  root, RabbitMQ admin, Keystone admin passwords) are identical static defaults; to customise them
+  you set the same value (or reference one pre-created `Secret`) in each Composition.
 
-> **Why the name `openstack-installer` (not `openstack`)?** The Kind becomes
-> `OpenstackInstaller`, and the suffix keeps the release-named scaffolding RBAC that Krateo's
-> chart-inspector creates while enumerating the chart from colliding with the services' own
-> resources.
+So separate blueprints are correct here. An umbrella would only be required if we switched to
+**generated** secrets — then Keystone/DB/RabbitMQ passwords would become outputs the other
+components consume, which *is* an input→output dependency.
 
-## Scope — what "functional" means here
+## The blueprints
 
-This blueprint delivers a **functional OpenStack *identity* plane**: Keystone +
-its datastore + cache. That is what makes an OpenStack "real" — every other service
-authenticates against Keystone and registers in its catalog. Verified end-to-end:
-`openstack token issue`, `openstack endpoint list`, `openstack service list`,
-`openstack catalog list` all work.
+| Blueprint (`blueprints/<c>`) | Chart / Kind            | Role                        | Tier      |
+| ---------------------------- | ----------------------- | --------------------------- | --------- |
+| `mariadb`                    | `OpenstackMariadb`      | Relational datastore        | identity  |
+| `memcached`                  | `OpenstackMemcached`    | Token/catalog cache         | identity  |
+| `keystone`                   | `OpenstackKeystone`     | **Identity** (the core)     | identity  |
+| `glance`                     | `OpenstackGlance`       | Image service               | identity  |
+| `horizon`                    | `OpenstackHorizon`      | Dashboard (web UI)          | identity  |
+| `rabbitmq`                   | `OpenstackRabbitmq`     | Message bus                 | compute   |
+| `placement`                  | `OpenstackPlacement`    | Resource placement          | compute   |
+| `openvswitch`                | `OpenstackOpenvswitch`  | OVS datapath agent          | compute   |
+| `libvirt`                    | `OpenstackLibvirt`      | libvirt/QEMU hypervisor     | compute   |
+| `nova`                       | `OpenstackNova`         | Compute (VMs, QEMU)         | compute   |
+| `neutron`                    | `OpenstackNeutron`      | Networking (ML2/OVS, VXLAN) | compute   |
 
-**Compute (nova), networking (neutron) and live VMs are intentionally out of scope.** They
-require `/dev/kvm` nested virtualization and the Open vSwitch kernel datapath, which `kind`
-(and Docker Desktop on Apple Silicon) cannot provide; the OpenStack-Helm images are also
-amd64-only. Glance (Image) and Horizon (Dashboard) **are** included as optional, runnable
-control-plane components. To run compute, target a native amd64 cluster with KVM and extend
-the chart with the `nova`/`neutron`/`libvirt`/`openvswitch` subcharts.
+Each blueprint is **self-contained**: `blueprints/<c>/chart/` vendors the OpenStack-Helm chart
+(plus `helm-toolkit`), pinned to release **2025.1 "Epoxy"** (`ubuntu_jammy` images), with the
+Helm-hook job annotations stripped so Krateo's composition-dynamic-controller (which runs under a
+least-privilege ServiceAccount) can install them as plain, self-ordered resources. A small,
+curated `values.schema.json` drives each Composition CRD.
 
-## Prerequisites
+## Scope / what's verified
 
-- A Kubernetes cluster with a default `StorageClass` (kind ships `rancher.io/local-path`).
-- Krateo `core-provider` installed (tested with `1.0.0`).
-- **On Apple Silicon / arm64 hosts:** the OpenStack images are amd64-only and some are
-  manifest *lists* that omit arm64, which an arm64 node's containerd refuses. Pre-load them
-  as amd64 once per cluster (they then run under Rosetta/qemu emulation):
+- **Identity plane — fully working, composition-driven**, on both kind (amd64 emulation) and GKE
+  (native): MariaDB + Memcached + Keystone (+ Glance + Horizon). `openstack token issue`,
+  `endpoint/service/user/catalog list` all succeed; the Horizon UI logs in (screenshots below).
+- **Compute plane — deploys** on an amd64 cluster with the Open vSwitch kernel module (e.g. Ubuntu
+  GKE nodes): OVS datapath (`br-int`/`br-tun`), Neutron, Nova control services, and libvirt with
+  **QEMU** software virtualization (no `/dev/kvm` needed). Booting a CirrOS VM to `ACTIVE` is the
+  last-mile work in progress (Nova/Neutron agent registration). Compute is **not** possible on
+  kind/Apple-Silicon (no `/dev/kvm`, arm64-only) — use GKE, see [`quickstart-gke.md`](quickstart-gke.md).
 
-  ```sh
-  tools/kind-load-images.sh openstack      # docker pull --platform amd64 + kind load
-  ```
-
-  On a native amd64 cluster this step is unnecessary.
-
-## Configuration
-
-The Composition `spec` mirrors the (curated) chart values. Full schema in
-[`chart/values.schema.json`](chart/values.schema.json). Highlights:
-
-| Value                              | Default | Description                                            |
-| ---------------------------------- | ------- | ------------------------------------------------------ |
-| `keystone.pod.replicas.api`        | `1`     | Keystone API replicas (use `1` on kind).               |
-| `mariadb.pod.replicas.server`      | `1`     | MariaDB servers (`1` on kind; `3` for HA).             |
-| `rabbitmq.enabled`                 | `false` | Deploy the message bus (leave off on emulated kind).   |
-| `glance.enabled`                   | `false` | Deploy the Glance image service.                       |
-| `horizon.enabled`                  | `false` | Deploy the Horizon dashboard.                          |
-| `horizon.network.node_port.port`   | `31000` | NodePort to expose Horizon on.                         |
-
-## How to install
-
-### 1. Register the blueprint
+## Install
 
 ```sh
+# 1. Register the blueprints you want (each is one CompositionDefinition)
 kubectl create namespace openstack-system
-kubectl apply -f compositiondefinition.yaml
-```
+kubectl apply -f blueprints/keystone/compositiondefinition.yaml
+kubectl apply -f blueprints/mariadb/compositiondefinition.yaml
+# ...and the rest you need (memcached, glance, horizon, rabbitmq, placement, nova, neutron, libvirt, openvswitch)
 
-This publishes an `OpenstackInstaller` Composition type (`composition.krateo.io/v0-1-0`,
-plural `openstackinstallers`). `compositiondefinition.yaml` pulls the chart from
-`oci://ghcr.io/braghettos/charts/openstack-installer` (make that GHCR package public, or set
-the `credentials` block).
-
-### 2a. Create a Composition
-
-Each Composition is one OpenStack install; give it its own namespace.
-
-```sh
+# 2. Deploy one OpenStack install = a set of Compositions in one namespace
 kubectl create namespace openstack
-kubectl apply -f examples/composition.yaml
+kubectl apply -f examples/01-identity.yaml      # mariadb, memcached, keystone, glance, horizon
+# kubectl apply -f examples/02-compute.yaml     # rabbitmq, placement, ovs, libvirt, nova, neutron (GKE)
 ```
 
-```yaml
-apiVersion: composition.krateo.io/v0-1-0
-kind: OpenstackInstaller
-metadata:
-  name: openstack
-  namespace: openstack
-spec:
-  keystone:
-    pod:
-      replicas:
-        api: 1
-  # glance:  { enabled: true }
-  # horizon: { enabled: true, network: { node_port: { port: 31000 } } }
-```
-
-### 2b. Or use the Krateo Composable Portal
-
-```sh
-kubectl apply -f customform.yaml
-```
+Each Composition's `spec` is the curated chart values (e.g. `images.pull_policy`, replica counts,
+`neutron.network.interface.tunnel`, `nova.conf.nova.libvirt.virt_type`). Empty `spec: {}` uses the
+validated defaults.
 
 ## The dashboard (Horizon)
 
-With `horizon.enabled=true`, the OpenStack web dashboard is exposed on a NodePort. Logged in as
-`admin` / `password` (domain `Default`), the Identity panels are fully populated by Keystone:
+Logged in as `admin` / `password` (domain `Default`); the Identity panels are populated by Keystone:
 
-| Login | Identity → Projects (logged in as admin) |
-| ----- | ---------------------------------------- |
+| Login | Identity → Projects (admin) |
+| ----- | --------------------------- |
 | ![Horizon login](docs/horizon-login.png) | ![Horizon dashboard](docs/horizon-dashboard.png) |
-
-(The default *Compute* landing panel reports "not authorized" because Nova is not part of this
-identity-plane blueprint — see scope above. The Identity panels, backed by Keystone, work fully.)
 
 ## Accessing OpenStack
 
-Keystone's public/admin endpoints are registered behind an Ingress host; from inside the
-cluster use the **internal** interface (`keystone-api:5000`). Default admin credentials are
-`admin` / `password` (project `admin`, domain `Default`, region `RegionOne`):
+From inside the cluster use the **internal** Keystone interface (`keystone-api:5000`):
 
 ```sh
 kubectl -n openstack run osclient --rm -it --restart=Never \
@@ -147,45 +104,16 @@ kubectl -n openstack run osclient --rm -it --restart=Never \
   --command -- openstack token issue
 ```
 
-A token in the output means OpenStack identity is functional. When `horizon.enabled=true`,
-the dashboard is on the configured NodePort (e.g. `http://localhost:31000` with kind
-`extraPortMappings`).
+## Quickstarts
 
-See [`quickstart.md`](quickstart.md) for the full end-to-end test on kind.
+- [`quickstart-kind.md`](quickstart-kind.md) — identity plane on a local kind cluster (Apple
+  Silicon supported via amd64 image pre-loading).
+- [`quickstart-gke.md`](quickstart-gke.md) — disposable GKE cluster with the compute plane
+  (Nova/QEMU, Neutron/OVS).
 
 ## Publishing (CI)
 
-`.github/workflows/release-tag.yaml` builds the vendored dependencies, packages the chart and
-pushes it to GHCR as an OCI Helm artifact on every semver tag
-(`git tag 0.1.0 && git push origin 0.1.0` →
-`oci://ghcr.io/braghettos/charts/openstack-installer:0.1.0`). `.github/workflows/lint.yaml`
-runs `helm lint` + `helm template` (default and all-components profiles) on every PR.
-
-## Notes / troubleshooting
-
-- **Jobs are plain resources, not Helm hooks.** OpenStack-Helm ships its db/fernet/credential/
-  bootstrap jobs as Helm hooks with `hook-delete-policy: before-hook-creation`. Krateo's
-  composition-dynamic-controller runs under a least-privilege ServiceAccount that cannot
-  `delete` Jobs, so the hooks fail. This blueprint strips the hook annotations so the jobs are
-  ordinary, idempotent resources (OpenStack-Helm already orders them with
-  `kubernetes-entrypoint` dep-checks; `release_uuid` is left empty so specs are stable across
-  reconciles).
-- **chart-inspector caches by chart version.** If you re-publish a *different* chart under the
-  *same* version, restart the analyzers so the CDC RBAC is regenerated:
-  `kubectl rollout restart deploy/core-provider deploy/core-provider-chart-inspector -n krateo-system`.
-  A fresh `core-provider` install does not need this.
-
-## Verified
-
-End-to-end on a kind cluster (arm64 node, amd64 images under Rosetta/qemu emulation):
-
-- `helm lint` / `helm template` (default and all-components) / `helm package`.
-- The umbrella installs as a single release (`STATUS: deployed`); `MariaDB`, `Memcached` and
-  `keystone-api` reach `Running`, and the Keystone bootstrap/db/fernet/credential jobs all
-  `Completed`.
-- **The full Krateo flow:** `CompositionDefinition` reconciles to `Ready=True`/`Synced=True` and
-  generates the `OpenstackInstaller` CRD (`composition.krateo.io/v0-1-0`) with the curated spec
-  schema; an `OpenstackInstaller` Composition reconciles to `Ready=True`/`Synced=True`, the CDC
-  installs `oci://ghcr.io/braghettos/charts/openstack-installer:0.1.0`, and Keystone comes up.
-- `openstack token issue` returns a Fernet token; `endpoint list` / `service list` /
-  `user list` / `catalog list` are populated.
+`.github/workflows/release-tag.yaml` packages every `blueprints/*/chart` and pushes each to GHCR
+on a semver tag (`git tag 0.1.0 && git push origin 0.1.0` →
+`oci://ghcr.io/braghettos/charts/openstack-<component>:0.1.0`). `.github/workflows/lint.yaml`
+runs `helm lint` + `helm template` on every chart per PR.
