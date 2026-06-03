@@ -136,6 +136,11 @@ EOF
 kubectl -n openstack get svc horizon-int -w
 ```
 
+Verified on GKE: `horizon-int` became `type: LoadBalancer` with a public IP, and the dashboard
+served on it (`HTTP 200`, login page):
+
+![Horizon over the LoadBalancer public IP](docs/horizon-loadbalancer.png)
+
 (Default is `NodePort` on `31000`; `port-forward svc/horizon-int 8080:80` also works for a quick look.)
 
 ## Teardown (important — this cluster costs money)
