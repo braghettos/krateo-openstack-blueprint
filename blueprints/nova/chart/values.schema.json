@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
   "title": "OpenStack nova",
-  "description": "Configuration for the Nova compute service (OpenStack-Helm nova, release 2025.1). Only the fields here are settable on a Composition; everything else uses the chart defaults in values.yaml. Deploy all the OpenStack component blueprints into one namespace to form a complete install.",
+  "description": "Configuration for the Nova compute service (OpenStack-Helm nova, release 2025.1). Only the fields here are settable on a Composition; everything else uses the chart defaults in values.yaml. Deploy all the OpenStack component blueprints into one namespace to form a complete install. (Nova/libvirt virt_type=qemu is a fixed default in values.yaml to avoid the crdgen Kind-vs-'nova' property collision.)",
   "properties": {
     "images": {
       "type": "object",
@@ -17,33 +17,6 @@
             "Never"
           ],
           "default": "IfNotPresent"
-        }
-      }
-    },
-    "conf": {
-      "type": "object",
-      "title": "Config",
-      "properties": {
-        "nova": {
-          "type": "object",
-          "properties": {
-            "libvirt": {
-              "type": "object",
-              "title": "libvirt",
-              "properties": {
-                "virt_type": {
-                  "type": "string",
-                  "title": "Virtualization type",
-                  "description": "qemu = software emulation (no /dev/kvm needed); kvm = hardware acceleration.",
-                  "enum": [
-                    "qemu",
-                    "kvm"
-                  ],
-                  "default": "qemu"
-                }
-              }
-            }
-          }
         }
       }
     }

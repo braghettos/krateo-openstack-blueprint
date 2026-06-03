@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "type": "object",
   "title": "OpenStack libvirt",
-  "description": "Configuration for the libvirt/QEMU hypervisor agent (OpenStack-Helm libvirt, release 2025.1). Only the fields here are settable on a Composition; everything else uses the chart defaults in values.yaml. Deploy all the OpenStack component blueprints into one namespace to form a complete install.",
+  "description": "Configuration for the libvirt/QEMU hypervisor agent (OpenStack-Helm libvirt, release 2025.1). Only the fields here are settable on a Composition; everything else uses the chart defaults in values.yaml. Deploy all the OpenStack component blueprints into one namespace to form a complete install. (Nova/libvirt virt_type=qemu is a fixed default in values.yaml to avoid the crdgen Kind-vs-'libvirt' property collision.)",
   "properties": {
     "images": {
       "type": "object",
@@ -17,26 +17,6 @@
             "Never"
           ],
           "default": "IfNotPresent"
-        }
-      }
-    },
-    "conf": {
-      "type": "object",
-      "title": "Config",
-      "properties": {
-        "libvirt": {
-          "type": "object",
-          "properties": {
-            "virt_type": {
-              "type": "string",
-              "title": "Virtualization type",
-              "enum": [
-                "qemu",
-                "kvm"
-              ],
-              "default": "qemu"
-            }
-          }
         }
       }
     }
