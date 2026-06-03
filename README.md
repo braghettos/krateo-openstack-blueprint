@@ -149,6 +149,20 @@ pushes it to GHCR as an OCI Helm artifact on every semver tag
 `oci://ghcr.io/braghettos/charts/openstack-installer:0.1.0`). `.github/workflows/lint.yaml`
 runs `helm lint` + `helm template` (default and all-components profiles) on every PR.
 
+## Notes / troubleshooting
+
+- **Jobs are plain resources, not Helm hooks.** OpenStack-Helm ships its db/fernet/credential/
+  bootstrap jobs as Helm hooks with `hook-delete-policy: before-hook-creation`. Krateo's
+  composition-dynamic-controller runs under a least-privilege ServiceAccount that cannot
+  `delete` Jobs, so the hooks fail. This blueprint strips the hook annotations so the jobs are
+  ordinary, idempotent resources (OpenStack-Helm already orders them with
+  `kubernetes-entrypoint` dep-checks; `release_uuid` is left empty so specs are stable across
+  reconciles).
+- **chart-inspector caches by chart version.** If you re-publish a *different* chart under the
+  *same* version, restart the analyzers so the CDC RBAC is regenerated:
+  `kubectl rollout restart deploy/core-provider deploy/core-provider-chart-inspector -n krateo-system`.
+  A fresh `core-provider` install does not need this.
+
 ## Verified
 
 End-to-end on a kind cluster (arm64 node, amd64 images under Rosetta/qemu emulation):
@@ -157,5 +171,9 @@ End-to-end on a kind cluster (arm64 node, amd64 images under Rosetta/qemu emulat
 - The umbrella installs as a single release (`STATUS: deployed`); `MariaDB`, `Memcached` and
   `keystone-api` reach `Running`, and the Keystone bootstrap/db/fernet/credential jobs all
   `Completed`.
+- **The full Krateo flow:** `CompositionDefinition` reconciles to `Ready=True`/`Synced=True` and
+  generates the `OpenstackInstaller` CRD (`composition.krateo.io/v0-1-0`) with the curated spec
+  schema; an `OpenstackInstaller` Composition reconciles to `Ready=True`/`Synced=True`, the CDC
+  installs `oci://ghcr.io/braghettos/charts/openstack-installer:0.1.0`, and Keystone comes up.
 - `openstack token issue` returns a Fernet token; `endpoint list` / `service list` /
-  `catalog list` are populated.
+  `user list` / `catalog list` are populated.

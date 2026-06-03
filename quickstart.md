@@ -96,6 +96,10 @@ kubectl wait openstackinstaller/openstack -n openstack \
 
 Then verify with the same `osclient` token-issue command as in path A.
 
+> If you re-publish a changed chart under the **same** version, restart the analyzers so the
+> CDC RBAC is regenerated (a fresh install does not need this):
+> `kubectl rollout restart deploy/core-provider deploy/core-provider-chart-inspector -n krateo-system`
+
 ## Teardown
 
 ```sh
