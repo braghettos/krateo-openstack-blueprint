@@ -93,8 +93,11 @@ rolls out in order:
 ```yaml
 apiVersion: composition.krateo.io/v0-1-1
 kind: Openstack
-metadata: { name: openstack, namespace: openstack }
-spec: { profile: full }
+metadata:
+  name: openstack
+  namespace: openstack
+spec:
+  profile: full
 ```
 
 ---
