@@ -6,4 +6,4 @@ metadata:
 spec:
   chart:
     url: oci://ghcr.io/braghettos/charts/nova
-    version: "0.1.0"
+    version: "0.1.1"
