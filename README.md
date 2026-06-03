@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/krateo-loves-openstack.png" alt="Krateo loves OpenStack" width="720"/>
+</p>
+
 # Krateo Blueprints — OpenStack
 
 A set of [Krateo](https://krateo.io) blueprints that install OpenStack on Kubernetes using the

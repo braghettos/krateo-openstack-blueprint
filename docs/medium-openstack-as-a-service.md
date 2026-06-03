@@ -1,3 +1,5 @@
+![Krateo loves OpenStack](krateo-loves-openstack.png)
+
 # OpenStack-as-a-Service with Krateo — one Composition, one cloud
 
 *How we packaged the whole OpenStack-Helm stack as a set of Krateo
