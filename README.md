@@ -119,6 +119,18 @@ spec:
 kubectl apply -f customform.yaml
 ```
 
+## The dashboard (Horizon)
+
+With `horizon.enabled=true`, the OpenStack web dashboard is exposed on a NodePort. Logged in as
+`admin` / `password` (domain `Default`), the Identity panels are fully populated by Keystone:
+
+| Login | Identity → Projects (logged in as admin) |
+| ----- | ---------------------------------------- |
+| ![Horizon login](docs/horizon-login.png) | ![Horizon dashboard](docs/horizon-dashboard.png) |
+
+(The default *Compute* landing panel reports "not authorized" because Nova is not part of this
+identity-plane blueprint — see scope above. The Identity panels, backed by Keystone, work fully.)
+
 ## Accessing OpenStack
 
 Keystone's public/admin endpoints are registered behind an Ingress host; from inside the
