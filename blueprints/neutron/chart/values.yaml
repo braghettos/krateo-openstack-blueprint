@@ -1812,7 +1812,7 @@ endpoints:
         default: null
   oslo_cache:
     auth:
-      memcache_secret_key: null
+      memcache_secret_key: neutronmemcacheXXsecretXXkeyX0000000000000000000000000000000000
     host_fqdn_override:
       default: null
     hosts:
