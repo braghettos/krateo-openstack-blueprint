@@ -99,6 +99,18 @@ brings up `br-int`/`br-tun`. Booting a CirrOS instance to `ACTIVE` (register ima
 network/subnet → `openstack server create`) is the last-mile step; Nova/Neutron agent
 registration on GKE is being finalised.
 
+## The dashboard (Horizon)
+
+Once Horizon is up, log in as `admin` / `password`, domain `Default`:
+
+| Login | Identity → Projects (logged in as admin) |
+| ----- | ---------------------------------------- |
+| ![Horizon login](docs/horizon-login.png) | ![Horizon dashboard](docs/horizon-dashboard.png) |
+
+```sh
+kubectl -n openstack port-forward svc/horizon-int 8080:80   # then open http://localhost:8080
+```
+
 ## Teardown (important — this cluster costs money)
 
 ```sh

@@ -62,9 +62,20 @@ kubectl -n openstack run osclient --rm -it --restart=Never \
   --command -- openstack token issue
 ```
 
-A token table means identity is functional. Horizon (if deployed) is on NodePort `31000`
-(`http://localhost:31000` with the kind `extraPortMappings` in `tools/kind-openstack.yaml`),
-log in as `admin` / `password`, domain `Default`.
+A token table means identity is functional.
+
+## 5. The dashboard (Horizon)
+
+Horizon (deployed by the `horizon` blueprint / the orchestrator) is on NodePort `31000`
+(`http://localhost:31000` with the kind `extraPortMappings` in `tools/kind-openstack.yaml`). Log
+in as `admin` / `password`, domain `Default`:
+
+| Login | Identity → Projects (logged in as admin) |
+| ----- | ---------------------------------------- |
+| ![Horizon login](docs/horizon-login.png) | ![Horizon dashboard](docs/horizon-dashboard.png) |
+
+The Identity panels are populated by Keystone. (The default *Compute* panel shows "not authorized"
+on the identity profile — Nova is part of the compute plane; see [`quickstart-gke.md`](quickstart-gke.md).)
 
 ## Teardown
 
