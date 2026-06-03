@@ -1,48 +1,43 @@
-<!doctype html><html><head><meta charset='utf-8'><style>body{font-family:Georgia,'Times New Roman',serif;max-width:760px;margin:40px auto;padding:0 24px;color:#222;line-height:1.6;font-size:19px}
-h1{font-size:34px;line-height:1.2;font-family:-apple-system,Segoe UI,sans-serif} h2{font-size:26px;margin-top:34px;font-family:-apple-system,Segoe UI,sans-serif} h3{font-size:21px;margin-top:24px;font-family:-apple-system,Segoe UI,sans-serif}
+<!doctype html><html><head><meta charset='utf-8'><style>body{font-family:Georgia,serif;max-width:760px;margin:40px auto;padding:0 24px;color:#222;line-height:1.6;font-size:19px}
+h1{font-size:34px;line-height:1.2;font-family:-apple-system,Segoe UI,sans-serif}h2{font-size:26px;margin-top:34px;font-family:-apple-system,Segoe UI,sans-serif}h3{font-size:21px;margin-top:24px;font-family:-apple-system,Segoe UI,sans-serif}
 code{background:#f2f2f2;padding:2px 5px;border-radius:3px;font-size:15px;font-family:Menlo,monospace}
-pre{background:#1b1f23;color:#e8e8e8;padding:16px;border-radius:6px;overflow:auto;font-size:14px} pre code{background:none;color:#e8e8e8}
+pre{background:#1b1f23;color:#e8e8e8;padding:16px;border-radius:6px;overflow:auto;font-size:14px;white-space:pre;font-family:Menlo,monospace}
 blockquote{border-left:3px solid #222;margin:18px 0;padding-left:18px;color:#555;font-style:italic}
 figure{margin:26px 0}img{max-width:100%;border-radius:6px}figcaption{font-size:14px;color:#888;text-align:center;font-family:-apple-system,sans-serif;margin-top:8px}
-hr{border:none;text-align:center;margin:30px 0}hr:after{content:'· · ·';color:#aaa;letter-spacing:6px}
-a{color:#1a8917}</style></head><body><figure><img src="https://raw.githubusercontent.com/braghettos/krateo-openstack-blueprint/main/docs/krateo-loves-openstack.png" alt="Krateo loves OpenStack"/><figcaption>Krateo loves OpenStack</figcaption></figure>
+li{margin:6px 0}a{color:#1a8917}</style></head><body><figure><img src="https://raw.githubusercontent.com/braghettos/krateo-openstack-blueprint/main/docs/krateo-loves-openstack.png" alt="Krateo loves OpenStack"/><figcaption>Krateo loves OpenStack</figcaption></figure>
 <h1>OpenStack-as-a-Service with Krateo — one Composition, one cloud</h1>
 <p><em>How we packaged the whole OpenStack-Helm stack as a set of Krateo PlatformOps blueprints, so that a single <code>kubectl apply</code> rolls out a working OpenStack — identity, dashboard, and compute — in dependency order. Plus the handful of very real bugs that stood between "it renders" and "there's a VM running."</em></p>
-<hr/>
 <h2>The pitch</h2>
 <p>OpenStack is the canonical "hard to operate" platform: a dozen services, a message bus, a database, a hypervisor layer, all of which have to come up in the right order and find each other. <a href="https://opendev.org/openstack/openstack-helm">OpenStack-Helm</a> already turns each service into a Helm chart. What it <em>doesn't</em> give you is a self-service, declarative front door: <em>"give me an OpenStack"</em> as one Kubernetes object.</p>
 <p>That's exactly what <a href="https://krateo.io">Krateo</a> PlatformOps is for. A <strong><code>CompositionDefinition</code></strong> turns a Helm chart into a Kubernetes CRD; a <strong><code>Composition</code></strong> is an instance of it that Krateo's composition-dynamic-controller (CDC) reconciles by installing the chart. So the goal of this project was simple to state:</p>
 <blockquote><strong>One Composition = one OpenStack installation.</strong> Apply it, and a fully functional cloud comes up. Tear it down by deleting it.</blockquote>
 <p>This is the story of getting there — the design decisions, and the bugs that only showed up when we ran it for real on a GKE cluster.</p>
-<hr/>
 <h2>Design: one blueprint per chart (not one giant umbrella)</h2>
 <p>The tempting move is a single mega-chart with every OpenStack service as a subchart. We deliberately didn't. The rule we followed:</p>
-<blockquote>*Put components in separate blueprints when they're separate Helm charts. Only merge them into an umbrella when one blueprint's <strong>input</strong> depends on another blueprint's <strong>output</strong>.*</blockquote>
+<blockquote><em>Put components in separate blueprints when they're separate Helm charts. Only merge them into an umbrella when one blueprint's <strong>input</strong> depends on another blueprint's <strong>output</strong>.</em></blockquote>
 <p>We checked OpenStack-Helm against that rule and found:</p>
-<ul><li><strong>No input→output dependencies.</strong> Every cross-component reference is</li><li><em>static configuration</em> — a fixed Service DNS name (<code>keystone</code>,</li><li><code>mariadb</code>, <code>rabbitmq</code>) plus shared static passwords. No chart reads</li><li>another's runtime output. The helm-toolkit <code>*_lookup</code> helpers are</li><li>compile-time template functions over a static <code>endpoints</code> map, not</li><li>Kubernetes runtime lookups.</li><li><strong>Ordering is automatic across compositions.</strong> OpenStack-Helm gates</li><li>every pod and job on its dependencies with <code>kubernetes-entrypoint</code></li><li>init-containers that wait on Services/Jobs <em>by name</em>. Those names are</li><li>fixed, so the checks resolve across <em>separate</em> Compositions in one</li><li>namespace — Glance waits for the <code>keystone-api</code> Service no matter which</li><li>blueprint created it.</li></ul>
+<ul><li><strong>No input→output dependencies.</strong> Every cross-component reference is <em>static configuration</em> — a fixed Service DNS name (<code>keystone</code>, <code>mariadb</code>, <code>rabbitmq</code>) plus shared static passwords. No chart reads another's runtime output. The helm-toolkit <code>*_lookup</code> helpers are compile-time template functions over a static <code>endpoints</code> map, not Kubernetes runtime lookups.</li><li><strong>Ordering is automatic across compositions.</strong> OpenStack-Helm gates every pod and job on its dependencies with <code>kubernetes-entrypoint</code> init-containers that wait on Services/Jobs <em>by name</em>. Those names are fixed, so the checks resolve across <em>separate</em> Compositions in one namespace — Glance waits for the <code>keystone-api</code> Service no matter which blueprint created it.</li></ul>
 <p>So eleven small, independent blueprints — <code>mariadb</code>, <code>memcached</code>, <code>keystone</code>, <code>glance</code>, <code>horizon</code> (identity) and <code>rabbitmq</code>, <code>placement</code>, <code>openvswitch</code>, <code>libvirt</code>, <code>nova</code>, <code>neutron</code> (compute) — each vendoring its OpenStack-Helm chart with a curated <code>values.schema.json</code>. Clean, composable, individually testable.</p>
 <h2>…with one orchestrator on top</h2>
 <p>There <em>is</em> one real dependency: <strong>ordering</strong>. Keystone must be Ready before Glance/Nova/Neutron can register their endpoints, and firing all the Compositions at once races (a slow Keystone trips Krateo's <code>create-pending</code> guard).</p>
 <p>So above the per-component blueprints sits an <strong>orchestrator umbrella</strong> (<code>blueprints/openstack</code>, Kind <code>Openstack</code>). Its chart:</p>
-<ol><li>registers all the component <code>CompositionDefinition</code>s, then</li><li>emits each component <code>Composition</code> **only once its CRD exists and all</li><li>its dependency Compositions report <code>Ready=True</code>** — using Helm</li><li><code>lookup</code>, re-evaluated on every reconcile.</li></ol>
-<pre><code>profile: identity → mariadb + memcached → keystone → glance + horizon
-profile: full     → … then rabbitmq + placement + ovs + libvirt → nova + neutron</code></pre>
+<ol><li>registers all the component <code>CompositionDefinition</code>s, then</li><li>emits each component <code>Composition</code> <strong>only once its CRD exists and all its dependency Compositions report <code>Ready=True</code></strong> — using Helm <code>lookup</code>, re-evaluated on every reconcile.</li></ol>
+<pre>profile: identity → mariadb + memcached → keystone → glance + horizon
+profile: full     → … then rabbitmq + placement + ovs + libvirt → nova + neutron</pre>
 <p>On the first reconcile only the zero-dependency components render; each subsequent pass unlocks the next tier.</p>
 <figure><img src="https://raw.githubusercontent.com/braghettos/krateo-openstack-blueprint/main/docs/diagram-orchestrator-rollout.png" alt="The orchestrator walks a four-tier dependency graph: data (mariadb, memcached) → identity (keystone) → image/UI (glance, horizon) → compute (placement, neutron, nova, libvirt, openvswitch). Each component Composition renders only when its dependencies are Ready."/><figcaption>The orchestrator walks a four-tier dependency graph: data (mariadb, memcached) → identity (keystone) → image/UI (glance, horizon) → compute (placement, neutron, nova, libvirt, openvswitch). Each component Composition renders only when its dependencies are Ready.</figcaption></figure>
 <p>One <code>Openstack</code> Composition, <code>spec.profile: full</code>, and the whole cloud rolls out in order:</p>
-<pre><code>apiVersion: composition.krateo.io/v0-1-1
+<pre>apiVersion: composition.krateo.io/v0-1-1
 kind: Openstack
 metadata: { name: openstack, namespace: openstack }
-spec: { profile: full }</code></pre>
-<hr/>
+spec: { profile: full }</pre>
 <h2>The reconcile loop <em>is</em> a state machine</h2>
 <p>It's worth being precise about <em>why</em> this works, because it's the crux of the design. Krateo's composition-dynamic-controller (CDC) is a <strong>level- triggered</strong> controller: it reconciles the <code>Openstack</code> Composition on a loop, and <strong>each reconcile re-renders the umbrella chart from scratch</strong>.</p>
 <p>The trick is that the umbrella's <code>lookup</code> calls run <em>at render time, against live cluster state</em> — they ask "does the <code>Keystone</code> CRD exist?", "is the <code>keystone</code> Composition <code>Ready=True</code>?" — every single pass. So the set of component Compositions the chart emits is a <strong>pure function of what the controller observes right now</strong>. No stored progress, no edge-triggered events, no ordering logic in code: just <em>current state → rendered output</em>.</p>
 <p>That turns the rollout into a deterministic <strong>state machine</strong> that the controller walks to a fixed point:</p>
 <figure><img src="https://raw.githubusercontent.com/braghettos/krateo-openstack-blueprint/main/docs/diagram-reconcile-state-machine.png" alt="The CDC reconcile loop as a state machine: each pass re-evaluates the Helm lookups against live cluster state and advances one tier as its dependencies report Ready, from an empty cluster to a converged OpenStack, after which reconciles are no-ops."/><figcaption>The CDC reconcile loop as a state machine: each pass re-evaluates the Helm lookups against live cluster state and advances one tier as its dependencies report Ready, from an empty cluster to a converged OpenStack, after which reconciles are no-ops.</figcaption></figure>
-<ul><li><strong>S0 → S1:</strong> on the first pass only the zero-dependency tier (<code>mariadb</code>,</li><li><code>memcached</code>) satisfies its gate, so only those render.</li><li><strong>S1 → S2 → S3 → …:</strong> each later reconcile notices the previous tier is</li><li>now <code>Ready</code> and unlocks the next, exactly the way a state machine</li><li>advances on a guard becoming true.</li><li><strong>S5 (converged):</strong> once everything is up, every lookup still resolves</li><li>the same way, the rendered manifest stops changing, and reconciles</li><li>become <strong>no-ops</strong>.</li></ul>
+<ul><li><strong>S0 → S1:</strong> on the first pass only the zero-dependency tier (<code>mariadb</code>, <code>memcached</code>) satisfies its gate, so only those render.</li><li><strong>S1 → S2 → S3 → …:</strong> each later reconcile notices the previous tier is now <code>Ready</code> and unlocks the next, exactly the way a state machine advances on a guard becoming true.</li><li><strong>S5 (converged):</strong> once everything is up, every lookup still resolves the same way, the rendered manifest stops changing, and reconciles become <strong>no-ops</strong>.</li></ul>
 <p>Because it's level-triggered rather than firing once on an event, it's also <strong>self-correcting</strong>: delete a component and the next reconcile simply re-emits it. The "ordering logic" you'd normally hand-write in an operator is, here, an emergent property of pure-function rendering over observed state. (<code>profile: identity</code> stops the machine at S3; <code>profile: full</code> runs it to S5.)</p>
-<hr/>
 <h2>The bugs that only show up for real</h2>
 <p>None of these failed CI. All of them failed the first time we booted a VM.</p>
 <h3>1. Helm hooks vs. a least-privilege controller</h3>
@@ -51,39 +46,37 @@ spec: { profile: full }</code></pre>
 <p>Krateo's chart-inspector analyses a chart's resources (to derive RBAC) and <strong>caches that by chart version</strong>. Re-publishing a changed chart under the same <code>0.1.0</code> served the stale analysis. During development the fix is to restart <code>core-provider</code> + <code>core-provider-chart-inspector</code> and, on a live cluster, to <strong>bump the version</strong> — which cleanly busts the cache. (Bumping a version regenerates the CRD apiVersion too — <code>0.1.0 → v0-1-0</code>, <code>0.1.1 → v0-1-1</code> — so existing Composition CRs must be recreated at the new apiVersion. Worth knowing before you do it on a running cloud.)</p>
 <h3>3. The phantom <code>rabbitmq-rabbitmq-1</code> that broke all messaging</h3>
 <p>Nova came up but every VM went <code>ERROR</code>. The compute health-probe told the story:</p>
-<pre><code>ERROR oslo.messaging._drivers.impl_rabbit: Connection failed:
-[Errno -2] Name or service not known</code></pre>
+<pre>ERROR oslo.messaging._drivers.impl_rabbit: Connection failed:
+[Errno -2] Name or service not known</pre>
 <p>The consumers' <code>transport_url</code> targeted <strong>two</strong> RabbitMQ hosts — <code>rabbitmq-rabbitmq-0</code> <em>and</em> <code>rabbitmq-rabbitmq-1</code> — because they advertised two messaging replicas. There was only one broker; <code>-1</code> was NXDOMAIN, and oslo.messaging choked. The fix lives in the blueprint values, not in a hand-patched secret:</p>
-<pre><code>endpoints:
+<pre>endpoints:
   oslo_messaging:
     statefulset:
       replicas: 1
-      name: rabbitmq-rabbitmq</code></pre>
+      name: rabbitmq-rabbitmq</pre>
 <h3>4. The non-deterministic render that rolled every pod, forever</h3>
 <p>Even with messaging fixed, Nova never <em>stabilised</em>. The CDC was rolling every pod on <strong>every reconcile</strong>. Diffing two consecutive Helm release manifests found a single changing line:</p>
-<pre><code>- memcache_secret_key = tB8VZcNeZ2g7…
-+ memcache_secret_key = BmJZD09GtSey…</code></pre>
+<pre>- memcache_secret_key = tB8VZcNeZ2g7…
++ memcache_secret_key = BmJZD09GtSey…</pre>
 <p>OpenStack-Helm's <code>configmap-etc</code> generates that key with <code>randAlphaNum 64</code> when <code>endpoints.oslo_cache.auth.memcache_secret_key</code> is null. Under a reconcile loop, a fresh random key each render → a new <code>*-etc</code> Secret → a changed pod-template checksum → a rolling restart of every pod. Nova's readiness probes (80 s delay + 90 s period) never got a stable window, so compute never registered. Pin the key and <code>helm template</code> becomes byte-identical across runs:</p>
-<pre><code>endpoints:
+<pre>endpoints:
   oslo_cache:
     auth:
-      memcache_secret_key: &lt;a fixed string&gt;</code></pre>
+      memcache_secret_key: &lt;a fixed string&gt;</pre>
 <p><strong>The lesson that ties #3 and #4 together:</strong> a controller that reconciles on an interval is <em>merciless</em> about non-determinism. A chart that's "fine" under <code>helm install</code> can be pathological under a CDC if any rendered byte changes per run. Determinism isn't a nicety here — it's a correctness requirement.</p>
-<hr/>
 <h2>The payoff</h2>
 <p>With the blueprints fixed and published (<code>0.1.1</code>):</p>
-<ul><li><strong>Identity plane</strong> — fully composition-driven on both kind (amd64</li><li>emulation) and GKE: <code>openstack token issue</code>, endpoint/service/catalog</li><li>list, and the <strong>Horizon dashboard</strong> all work.</li></ul>
+<ul><li><strong>Identity plane</strong> — fully composition-driven on both kind (amd64 emulation) and GKE: <code>openstack token issue</code>, endpoint/service/catalog list, and the <strong>Horizon dashboard</strong> all work.</li></ul>
 <figure><img src="https://raw.githubusercontent.com/braghettos/krateo-openstack-blueprint/main/docs/horizon-dashboard.png" alt="The Horizon dashboard, logged in as admin — Identity panels populated by the composition-deployed Keystone."/><figcaption>The Horizon dashboard, logged in as admin — Identity panels populated by the composition-deployed Keystone.</figcaption></figure>
-<ul><li><strong>Compute plane</strong> — on a GKE node with the OVS kernel module and **QEMU</li><li>software virt** (no <code>/dev/kvm</code>): <code>nova-compute</code> registers as a</li><li>hypervisor, all four Neutron agents come up (ML2/OVS, VXLAN on the node</li><li>interface), and a <strong>CirrOS VM boots to <code>ACTIVE</code></strong> — pulling a Neutron</li><li>DHCP lease and reaching its login prompt.</li></ul>
+<ul><li><strong>Compute plane</strong> — on a GKE node with the OVS kernel module and <strong>QEMU software virt</strong> (no <code>/dev/kvm</code>): <code>nova-compute</code> registers as a hypervisor, all four Neutron agents come up (ML2/OVS, VXLAN on the node interface), and a <strong>CirrOS VM boots to <code>ACTIVE</code></strong> — pulling a Neutron DHCP lease and reaching its login prompt.</li></ul>
 <figure><img src="https://raw.githubusercontent.com/braghettos/krateo-openstack-blueprint/main/docs/compute-instances-active.png" alt="CirrOS instances ACTIVE in OpenStack, scheduled on the QEMU compute node."/><figcaption>CirrOS instances ACTIVE in OpenStack, scheduled on the QEMU compute node.</figcaption></figure>
 <figure><img src="https://raw.githubusercontent.com/braghettos/krateo-openstack-blueprint/main/docs/cirros-console-active.png" alt="The CirrOS serial console — the VM boots, gets a Neutron DHCP lease, and reaches its login prompt."/><figcaption>The CirrOS serial console — the VM boots, gets a Neutron DHCP lease, and reaches its login prompt.</figcaption></figure>
 <p>All of it from Compositions. No <code>kubectl edit</code>, no manual <code>helm install</code> — every fix went back into the blueprint values and shipped as a chart.</p>
-<pre><code>kubectl create namespace openstack-system
+<pre>kubectl create namespace openstack-system
 kubectl apply -f blueprints/openstack/compositiondefinition.yaml
 kubectl create namespace openstack
-kubectl apply -f examples/openstack.yaml      # one Openstack, profile: full</code></pre>
+kubectl apply -f examples/openstack.yaml      # one Openstack, profile: full</pre>
 <p>…and a cloud comes up.</p>
-<hr/>
 <h2>Where this goes next</h2>
 <p>An OpenStack you can <code>kubectl apply</code> is the substrate. The natural next layer is managing the cloud's <em>contents</em> the same way — projects, networks, images, and <strong>VMs</strong> — as Kubernetes custom resources. That's a Krateo Operator Generator (KOG) story, and it's the subject of the companion article, <em>"OpenStack Compute Kubernetes Operator with Krateo"</em>: a Nova operator with <strong>zero operator code</strong>, tested against this very blueprint.</p>
 <p><em>Repo: <a href="https://github.com/braghettos/krateo-openstack-blueprint">github.com/braghettos/krateo-openstack-blueprint</a>. Quickstarts for kind and GKE included.</em></p></body></html>
