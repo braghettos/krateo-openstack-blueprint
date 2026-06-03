@@ -43,6 +43,35 @@
       "type": "object",
       "title": "Network",
       "properties": {
+        "dashboard": {
+          "type": "object",
+          "title": "Dashboard",
+          "properties": {
+            "service": {
+              "type": "object",
+              "title": "Service",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "title": "Service type",
+                  "description": "How to expose Horizon. NodePort (default; uses the NodePort below), LoadBalancer (external L4 LB + public IP on GKE/EKS/AKS), or ClusterIP (in-cluster only).",
+                  "enum": [
+                    "NodePort",
+                    "LoadBalancer",
+                    "ClusterIP"
+                  ],
+                  "default": "NodePort"
+                },
+                "annotations": {
+                  "type": "object",
+                  "title": "Service annotations",
+                  "description": "Annotations for the Service, e.g. cloud LB controls (internal LB, static IP, ...).",
+                  "additionalProperties": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
         "node_port": {
           "type": "object",
           "title": "NodePort",

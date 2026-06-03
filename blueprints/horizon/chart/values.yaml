@@ -889,6 +889,13 @@ network:
         cluster: ingress-cluster
         namespace: ingress-openstack
       public: true
+    # Krateo blueprint patch: how the Horizon Service is exposed.
+    #   NodePort     - default, uses network.node_port.port (kind/on-prem)
+    #   LoadBalancer - provision an external L4 LB + public IP (GKE/EKS/AKS)
+    #   ClusterIP    - in-cluster only (reach via port-forward/ingress)
+    service:
+      type: NodePort
+      annotations: {}
   external_policy_local: false
   node_port:
     enabled: true

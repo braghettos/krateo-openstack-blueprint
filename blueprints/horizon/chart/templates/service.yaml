@@ -14,31 +14,32 @@ limitations under the License.
 
 {{- if .Values.manifests.service }}
 {{- $envAll := . }}
+{{- /* Krateo blueprint patch: allow LoadBalancer (GKE etc.) in addition to the
+       upstream NodePort/ClusterIP. network.dashboard.service.type wins; otherwise
+       fall back to the legacy network.node_port.enabled behaviour. */}}
+{{- $svcType := .Values.network.dashboard.service.type | default (ternary "NodePort" "ClusterIP" .Values.network.node_port.enabled) }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ tuple "dashboard" "internal" . | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
+{{- if .Values.network.dashboard.service.annotations }}
+  annotations:
+{{ toYaml .Values.network.dashboard.service.annotations | indent 4 }}
+{{- end }}
 spec:
   ports:
-    {{ if .Values.network.node_port.enabled }}
     - name: web
       protocol: TCP
+      {{- if and (eq $svcType "NodePort") .Values.network.node_port.enabled }}
       nodePort: {{ .Values.network.node_port.port }}
+      {{- end }}
       port: {{ tuple "dashboard" "internal" "web" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
       targetPort: {{ tuple "dashboard" "internal" "web" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
-    {{ else }}
-    - name: web
-      protocol: TCP
-      port: {{ tuple "dashboard" "internal" "web" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
-      targetPort: {{ tuple "dashboard" "internal" "web" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
-    {{ end }}
   selector:
 {{ tuple $envAll "horizon" "server" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
-  {{ if .Values.network.node_port.enabled }}
-  type: NodePort
-  {{ if .Values.network.external_policy_local }}
+  type: {{ $svcType }}
+  {{- if and (eq $svcType "NodePort") .Values.network.external_policy_local }}
   externalTrafficPolicy: Local
-  {{ end }}
-  {{ end }}
+  {{- end }}
 {{- end }}

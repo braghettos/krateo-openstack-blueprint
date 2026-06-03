@@ -107,9 +107,36 @@ Once Horizon is up, log in as `admin` / `password`, domain `Default`:
 | ----- | ---------------------------------------- |
 | ![Horizon login](docs/horizon-login.png) | ![Horizon dashboard](docs/horizon-dashboard.png) |
 
-```sh
-kubectl -n openstack port-forward svc/horizon-int 8080:80   # then open http://localhost:8080
+**Expose it with a LoadBalancer (recommended on GKE).** The `horizon` blueprint supports
+`network.dashboard.service.type: LoadBalancer`, which makes GKE provision an external L4 load
+balancer with a public IP for the `horizon-int` Service. Set it on the Composition:
+
+```yaml
+apiVersion: composition.krateo.io/v0-1-0
+kind: OpenstackHorizon
+metadata: { name: openstack-horizon, namespace: openstack }
+spec:
+  network:
+    dashboard:
+      service:
+        type: LoadBalancer
+        # annotations:                                  # optional cloud-LB controls, e.g.
+        #   networking.gke.io/load-balancer-type: "Internal"
 ```
+
+```sh
+kubectl apply -f - <<'EOF'
+apiVersion: composition.krateo.io/v0-1-0
+kind: OpenstackHorizon
+metadata: { name: openstack-horizon, namespace: openstack }
+spec: { network: { dashboard: { service: { type: LoadBalancer } } } }
+EOF
+
+# wait for the external IP, then open http://<EXTERNAL-IP>
+kubectl -n openstack get svc horizon-int -w
+```
+
+(Default is `NodePort` on `31000`; `port-forward svc/horizon-int 8080:80` also works for a quick look.)
 
 ## Teardown (important — this cluster costs money)
 
