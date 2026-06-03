@@ -67,11 +67,14 @@ curated `values.schema.json` drives each Composition CRD.
 - **Identity plane — fully working, composition-driven**, on both kind (amd64 emulation) and GKE
   (native): MariaDB + Memcached + Keystone (+ Glance + Horizon). `openstack token issue`,
   `endpoint/service/user/catalog list` all succeed; the Horizon UI logs in (screenshots below).
-- **Compute plane — deploys** on an amd64 cluster with the Open vSwitch kernel module (e.g. Ubuntu
-  GKE nodes): OVS datapath (`br-int`/`br-tun`), Neutron, Nova control services, and libvirt with
-  **QEMU** software virtualization (no `/dev/kvm` needed). Booting a CirrOS VM to `ACTIVE` is the
-  last-mile work in progress (Nova/Neutron agent registration). Compute is **not** possible on
-  kind/Apple-Silicon (no `/dev/kvm`, arm64-only) — use GKE, see [`quickstart-gke.md`](quickstart-gke.md).
+- **Compute plane — fully working, composition-driven** on an amd64 cluster with the Open vSwitch
+  kernel module (e.g. Ubuntu GKE nodes): OVS datapath (`br-int`/`br-tun`), Neutron (ML2/OVS, VXLAN),
+  Nova control services, and libvirt with **QEMU** software virtualization (no `/dev/kvm` needed).
+  `nova-compute` registers as a hypervisor, all four Neutron agents come up, and a **CirrOS VM boots
+  to `ACTIVE`** (Neutron DHCP lease, serial console to login prompt). Two determinism fixes were
+  required for the Krateo CDC path — see [`docs/medium-openstack-as-a-service.md`](docs/medium-openstack-as-a-service.md).
+  Compute is **not** possible on kind/Apple-Silicon (no `/dev/kvm`, arm64-only) — use GKE, see
+  [`quickstart-gke.md`](quickstart-gke.md).
 
 ## Install
 
