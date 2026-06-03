@@ -1,0 +1,32 @@
+name: lint
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Stamp a temporary chart version
+        run: sed -i "s/CHART_VERSION/0.0.0-ci/g" ./chart/Chart.yaml
+
+      - name: Lint
+        run: helm lint ./chart
+
+      - name: Render (default identity profile)
+        run: helm template openstack ./chart --namespace openstack > /dev/null
+
+      - name: Render (all optional components on)
+        run: |
+          helm template openstack ./chart --namespace openstack \
+            --set rabbitmq.enabled=true \
+            --set glance.enabled=true \
+            --set horizon.enabled=true > /dev/null

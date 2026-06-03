@@ -1,0 +1,70 @@
+apiVersion: v2
+# This blueprint is a self-contained UMBRELLA over the upstream OpenStack-Helm
+# charts (https://opendev.org/openstack/openstack-helm, release 2025.1 / "Epoxy").
+#
+# Why an umbrella (and why vendored) instead of a single fork:
+#  - OpenStack-Helm ships ONE chart per service (keystone, glance, horizon, ...)
+#    with no umbrella; "one OpenStack install" is therefore an ordered SET of
+#    charts. This umbrella bundles them so a single Composition = one install.
+#  - Krateo's core-provider builds the Composition CRD from THIS chart's
+#    values.schema.json only (it never reads values.yaml). Each subchart ships a
+#    huge, partial schema crdgen can't express, so we expose a small curated
+#    values.schema.json here and keep the working wiring in values.yaml.
+#  - The subcharts (and helm-toolkit, vendored inside each) are committed under
+#    charts/ so the blueprint is fully pinned and reproducible — no reliance on
+#    the upstream chart repo being reachable at install time.
+#
+# The chart name is `openstack-installer` (not `openstack`): the resulting Kind
+# is `OpenstackInstaller`, and the suffix keeps the release-named scaffolding RBAC
+# that Krateo's chart-inspector creates from colliding with the services' own
+# resources.
+#
+# Default profile = the OpenStack IDENTITY control plane (mariadb + memcached +
+# keystone). RabbitMQ, Glance and Horizon are optional (off by default) — see
+# values.schema.json. Compute (nova/neutron/VMs) is intentionally out of scope:
+# it needs /dev/kvm + OVS kernel datapath that kind cannot provide. See README.
+name: openstack-installer
+description: A Krateo blueprint that installs an OpenStack identity control plane (Keystone, backed by MariaDB + Memcached) via the upstream OpenStack-Helm charts, with optional RabbitMQ, Glance and Horizon. Each Composition is one OpenStack installation.
+type: application
+
+# Drives the Composition CRD version (e.g. 0.1.0 -> v0-1-0). Stamped by CI.
+version: CHART_VERSION
+# OpenStack release this blueprint tracks (2025.1 "Epoxy", ubuntu_jammy images).
+appVersion: "2025.1"
+
+home: https://krateo.io
+icon: "https://github.com/krateoplatformops/krateo/blob/main/docs/media/logo.svg"
+keywords:
+  - openstack
+  - keystone
+  - identity
+  - iaas
+  - installer
+sources:
+  - https://github.com/braghettos/krateo-openstack-blueprint
+  - https://opendev.org/openstack/openstack-helm
+annotations:
+  krateoSupportedVersion: "2.7.0"
+
+dependencies:
+  - name: mariadb
+    version: "2026.1.0"
+    repository: "file://charts/mariadb"
+  - name: memcached
+    version: "2026.1.0"
+    repository: "file://charts/memcached"
+  - name: keystone
+    version: "2026.1.0"
+    repository: "file://charts/keystone"
+  - name: rabbitmq
+    version: "2026.1.0"
+    repository: "file://charts/rabbitmq"
+    condition: rabbitmq.enabled
+  - name: glance
+    version: "2026.1.0"
+    repository: "file://charts/glance"
+    condition: glance.enabled
+  - name: horizon
+    version: "2026.1.0"
+    repository: "file://charts/horizon"
+    condition: horizon.enabled

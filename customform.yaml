@@ -1,0 +1,92 @@
+apiVersion: v1
+data:
+  drawer: "true"
+  form: "true"
+  showFormStructure: "true"
+  drawerSize: large
+kind: ConfigMap
+metadata:
+  name: template-openstack-card
+  namespace: openstack-system
+---
+apiVersion: templates.krateo.io/v1alpha1
+kind: Widget
+metadata:
+  name: template-openstack-card
+  namespace: openstack-system
+spec:
+  actions:
+  - template:
+      apiVersion: templates.krateo.io/v1alpha1
+      name: template-openstack-customform
+      namespace: openstack-system
+      resource: customforms
+      verb: GET
+  - template:
+      apiVersion: core.krateo.io/v1alpha1
+      name: openstack
+      namespace: openstack-system
+      resource: compositiondefinitions
+      verb: DELETE
+  app:
+    template:
+      color: ${ .getCompositionDefinition.status.conditions[] | select(.type == "Ready") | if .status == "False" then "orange" elif .status == "True" then "green" else "grey" end }
+      content: Install an OpenStack identity control plane (Keystone) via the OpenStack-Helm charts.
+      icon: fa-solid fa-cloud
+      tags: openstack-system,0.1.0
+      title: openstack
+      status: ${ .getCompositionDefinition.status.conditions[] | select(.type == "Ready") | "Ready:" + .status }
+      date: ${ .getCompositionDefinition.metadata.creationTimestamp }
+  propsRef:
+    name: template-openstack-card
+    namespace: openstack-system
+  type: card
+  api:
+  - name: getCompositionDefinition
+    path: "/apis/core.krateo.io/v1alpha1/namespaces/openstack-system/compositiondefinitions/openstack"
+    verb: GET
+    headers:
+    - 'Accept: application/json'
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: template-openstack-customform
+  namespace: openstack-system
+data:
+  onSubmitId: submit
+  onSubmitVerb: POST
+  payloadFormKey: spec
+  redirectRoute: /compositions/${metadata.namespace}/${metadata.name}
+  redirectTimeout: "50"
+---
+apiVersion: templates.krateo.io/v1alpha1
+kind: CustomForm
+metadata:
+  name: template-openstack-customform
+  namespace: openstack-system
+spec:
+  type: customform
+  propsRef:
+    name: template-openstack-customform
+    namespace: openstack-system
+  actions:
+    - template:
+        id: submit
+        apiVersion: composition.krateo.io/v0-1-0
+        verb: POST
+        resource: openstackinstallers
+        payloadToOverride:
+        - name: metadata.name
+          value: ${ "openstack" }
+        - name: metadata.namespace
+          value: ${ "openstack" }
+  app:
+    template:
+      schema: ${ .getCRD | .spec.versions[] | select(.name == "v0-1-0") | .schema.openAPIV3Schema.properties.spec }
+  api:
+  - name: getCRD
+    path: "/apis/apiextensions.k8s.io/v1/customresourcedefinitions/openstackinstallers.composition.krateo.io"
+    verb: GET
+    headers:
+    - 'Accept: application/json'

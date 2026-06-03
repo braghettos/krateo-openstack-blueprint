@@ -1,0 +1,15 @@
+# kind cluster for testing the OpenStack blueprint.
+# extraPortMappings expose Horizon's NodePort (and a spare) directly on the host,
+# so the dashboard is reachable at http://localhost:31000 without a port-forwarder.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: openstack
+nodes:
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 31000
+    hostPort: 31000
+    protocol: TCP
+  - containerPort: 30080
+    hostPort: 30080
+    protocol: TCP

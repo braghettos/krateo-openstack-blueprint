@@ -1,0 +1,33 @@
+OpenStack ({{ .Chart.AppVersion }}) is being installed by the "{{ .Release.Name }}" release in namespace "{{ .Release.Namespace }}".
+
+Components:
+  - MariaDB                     (datastore)        always
+  - Memcached                   (token/catalog cache) always
+  - Keystone                    (Identity)         always
+  - RabbitMQ                    (message bus)      {{ if .Values.rabbitmq.enabled }}ENABLED{{ else }}disabled{{ end }}
+  - Glance                      (Image service)    {{ if .Values.glance.enabled }}ENABLED{{ else }}disabled{{ end }}
+  - Horizon                     (Dashboard)        {{ if .Values.horizon.enabled }}ENABLED{{ else }}disabled{{ end }}
+
+Wait for Keystone to come up:
+  kubectl -n {{ .Release.Namespace }} rollout status deploy/keystone-api
+
+Talk to OpenStack from inside the cluster (use the INTERNAL interface — the public
+endpoint is registered behind an Ingress host):
+
+  kubectl -n {{ .Release.Namespace }} run osclient --rm -it --restart=Never \
+    --image=quay.io/airshipit/openstack-client:2025.1-ubuntu_jammy \
+    --env OS_AUTH_URL=http://keystone-api.{{ .Release.Namespace }}.svc.cluster.local:5000/v3 \
+    --env OS_USERNAME=admin --env OS_PASSWORD=password \
+    --env OS_PROJECT_NAME=admin \
+    --env OS_USER_DOMAIN_NAME=Default --env OS_PROJECT_DOMAIN_NAME=Default \
+    --env OS_IDENTITY_API_VERSION=3 --env OS_REGION_NAME=RegionOne \
+    --env OS_INTERFACE=internal \
+    --command -- openstack token issue
+
+A token in the output means OpenStack identity is functional.
+{{ if .Values.horizon.enabled }}
+Horizon dashboard: NodePort {{ .Values.horizon.network.node_port.port }}
+  (with kind extraPortMappings: http://localhost:{{ .Values.horizon.network.node_port.port }})
+{{- end }}
+
+Default admin credentials: admin / password (project admin, domain Default, RegionOne).

@@ -1,0 +1,49 @@
+name: release-tag
+
+# Packages the blueprint chart (a self-contained umbrella over the OpenStack-Helm
+# charts — all dependencies are vendored under chart/charts) and publishes it to
+# the GitHub Container Registry as an OCI Helm artifact on every semver tag.
+#
+# Pushing tag "0.1.0" publishes:
+#   oci://ghcr.io/<owner>/charts/openstack-installer:0.1.0
+on:
+  push:
+    tags: ["[0-9]+.[0-9]+.[0-9]+"]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  package-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Resolve version and registry
+        run: |
+          echo "VERSION=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          echo "OCI_REPO=oci://ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/charts" >> "$GITHUB_ENV"
+
+      - name: Stamp chart version
+        run: sed -i "s/CHART_VERSION/${VERSION}/g" ./chart/Chart.yaml
+
+      - name: Build chart dependencies (vendored)
+        run: helm dependency build ./chart
+
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Package chart
+        run: helm package ./chart --destination .
+
+      - name: Push chart to GHCR (OCI)
+        run: |
+          helm push "openstack-installer-${VERSION}.tgz" "${OCI_REPO}"
+          echo "Published ${OCI_REPO}/openstack-installer:${VERSION}"

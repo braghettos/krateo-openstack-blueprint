@@ -1,0 +1,7 @@
+*.tgz
+!chart/charts/**/charts/*.tgz
+.DS_Store
+/tmp/
+*.log
+kubeconfig
+.claude/
