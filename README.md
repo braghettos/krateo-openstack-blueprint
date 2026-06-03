@@ -43,17 +43,17 @@ verified end-to-end (`mariadb`+`memcached` → `keystone` → `glance`+`horizon`
 
 | Blueprint (`blueprints/<c>`) | Chart / Kind            | Role                        | Tier      |
 | ---------------------------- | ----------------------- | --------------------------- | --------- |
-| `mariadb`                    | `OpenstackMariadb`      | Relational datastore        | identity  |
-| `memcached`                  | `OpenstackMemcached`    | Token/catalog cache         | identity  |
-| `keystone`                   | `OpenstackKeystone`     | **Identity** (the core)     | identity  |
-| `glance`                     | `OpenstackGlance`       | Image service               | identity  |
-| `horizon`                    | `OpenstackHorizon`      | Dashboard (web UI)          | identity  |
-| `rabbitmq`                   | `OpenstackRabbitmq`     | Message bus                 | compute   |
-| `placement`                  | `OpenstackPlacement`    | Resource placement          | compute   |
-| `openvswitch`                | `OpenstackOpenvswitch`  | OVS datapath agent          | compute   |
-| `libvirt`                    | `OpenstackLibvirt`      | libvirt/QEMU hypervisor     | compute   |
-| `nova`                       | `OpenstackNova`         | Compute (VMs, QEMU)         | compute   |
-| `neutron`                    | `OpenstackNeutron`      | Networking (ML2/OVS, VXLAN) | compute   |
+| `mariadb`                    | `Mariadb`      | Relational datastore        | identity  |
+| `memcached`                  | `Memcached`    | Token/catalog cache         | identity  |
+| `keystone`                   | `Keystone`     | **Identity** (the core)     | identity  |
+| `glance`                     | `Glance`       | Image service               | identity  |
+| `horizon`                    | `Horizon`      | Dashboard (web UI)          | identity  |
+| `rabbitmq`                   | `Rabbitmq`     | Message bus                 | compute   |
+| `placement`                  | `Placement`    | Resource placement          | compute   |
+| `openvswitch`                | `Openvswitch`  | OVS datapath agent          | compute   |
+| `libvirt`                    | `Libvirt`      | libvirt/QEMU hypervisor     | compute   |
+| `nova`                       | `Nova`         | Compute (VMs, QEMU)         | compute   |
+| `neutron`                    | `Neutron`      | Networking (ML2/OVS, VXLAN) | compute   |
 | `openstack`                  | `Openstack`             | **Orchestrator** (sequences the above) | umbrella |
 
 Each blueprint is **self-contained**: `blueprints/<c>/chart/` vendors the OpenStack-Helm chart
@@ -140,5 +140,5 @@ kubectl -n openstack run osclient --rm -it --restart=Never \
 
 `.github/workflows/release-tag.yaml` packages every `blueprints/*/chart` and pushes each to GHCR
 on a semver tag (`git tag 0.1.0 && git push origin 0.1.0` →
-`oci://ghcr.io/braghettos/charts/openstack-<component>:0.1.0`). `.github/workflows/lint.yaml`
+`oci://ghcr.io/braghettos/charts/<component>:0.1.0`). `.github/workflows/lint.yaml`
 runs `helm lint` + `helm template` on every chart per PR.

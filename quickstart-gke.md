@@ -66,8 +66,8 @@ ML2/OVS over VXLAN on `ens4`, no external provider bridge. To override per Compo
 
 ```yaml
 apiVersion: composition.krateo.io/v0-1-0
-kind: OpenstackNeutron
-metadata: { name: openstack-neutron, namespace: openstack }
+kind: Neutron
+metadata: { name: neutron, namespace: openstack }
 spec:
   network: { interface: { tunnel: ens4 } }   # set to your node's primary NIC
 ```
@@ -113,8 +113,8 @@ balancer with a public IP for the `horizon-int` Service. Set it on the Compositi
 
 ```yaml
 apiVersion: composition.krateo.io/v0-1-0
-kind: OpenstackHorizon
-metadata: { name: openstack-horizon, namespace: openstack }
+kind: Horizon
+metadata: { name: horizon, namespace: openstack }
 spec:
   network:
     dashboard:
@@ -127,8 +127,8 @@ spec:
 ```sh
 kubectl apply -f - <<'EOF'
 apiVersion: composition.krateo.io/v0-1-0
-kind: OpenstackHorizon
-metadata: { name: openstack-horizon, namespace: openstack }
+kind: Horizon
+metadata: { name: horizon, namespace: openstack }
 spec: { network: { dashboard: { service: { type: LoadBalancer } } } }
 EOF
 
