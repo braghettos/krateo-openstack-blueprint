@@ -13,8 +13,6 @@ limitations under the License.
 */}}
 
 {{- define "metadata.annotations.job.db_sync" }}
-helm.sh/hook: post-install,post-upgrade
-helm.sh/hook-weight: "-4"
 {{- end }}
 
 {{- if .Values.manifests.job_db_sync }}

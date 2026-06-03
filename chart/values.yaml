@@ -82,6 +82,12 @@ keystone:
     secret_rabbitmq: false
     # Avoid the Release-named test RBAC colliding across the umbrella subcharts.
     pod_rally_test: false
+    # image-repo-sync needs a local docker registry we do not run; the pre-delete
+    # credential-cleanup hook needs job DELETE rights the Krateo dynamic
+    # controller's least-privilege ServiceAccount does not have. Both are
+    # unnecessary for a working install.
+    job_image_repo_sync: false
+    job_credential_cleanup: false
   conf:
     keystone:
       oslo_messaging_notifications:

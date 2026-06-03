@@ -53,7 +53,6 @@ metadata:
   labels:
 {{ tuple $envAll "glance" "storage-init" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
   annotations:
-    helm.sh/hook: post-install,post-upgrade
 {{ tuple $serviceAccountName $envAll | include "helm-toolkit.snippets.custom_job_annotations" | indent 4 }}
     {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" }}
 spec:
