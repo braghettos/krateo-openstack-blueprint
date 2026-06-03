@@ -1,47 +1,45 @@
-# OpenStack compute plane — adds the message bus + compute/networking components.
-# Requires the identity tier (01-identity.yaml) in the same namespace, plus an
-# amd64 cluster with the Open vSwitch kernel module (e.g. Ubuntu GKE nodes), node
-# labels (openstack-compute-node/openvswitch/l3-agent=enabled) and neutron.network.
-# interface.tunnel set to the host NIC. See quickstart-gke.md.
+# OpenStack compute plane. Requires the identity tier in the same namespace, plus an
+# amd64 cluster with the Open vSwitch kernel module (e.g. Ubuntu GKE nodes) and node
+# labels (openstack-compute-node/openvswitch/l3-agent=enabled). See quickstart-gke.md.
 ---
 apiVersion: composition.krateo.io/v0-1-0
-kind: OpenstackRabbitmq
+kind: Rabbitmq
 metadata:
-  name: openstack-rabbitmq
+  name: rabbitmq
   namespace: openstack
 spec: {}
 ---
 apiVersion: composition.krateo.io/v0-1-0
-kind: OpenstackPlacement
+kind: Placement
 metadata:
-  name: openstack-placement
+  name: placement
   namespace: openstack
 spec: {}
 ---
 apiVersion: composition.krateo.io/v0-1-0
-kind: OpenstackOpenvswitch
+kind: Openvswitch
 metadata:
-  name: openstack-openvswitch
+  name: openvswitch
   namespace: openstack
 spec: {}
 ---
 apiVersion: composition.krateo.io/v0-1-0
-kind: OpenstackLibvirt
+kind: Libvirt
 metadata:
-  name: openstack-libvirt
+  name: libvirt
   namespace: openstack
 spec: {}
 ---
 apiVersion: composition.krateo.io/v0-1-0
-kind: OpenstackNova
+kind: Neutron
 metadata:
-  name: openstack-nova
+  name: neutron
   namespace: openstack
 spec: {}
 ---
 apiVersion: composition.krateo.io/v0-1-0
-kind: OpenstackNeutron
+kind: Nova
 metadata:
-  name: openstack-neutron
+  name: nova
   namespace: openstack
 spec: {}

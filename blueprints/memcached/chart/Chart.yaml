@@ -14,7 +14,7 @@
 apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Memcached
-name: openstack-memcached
+name: memcached
 version: CHART_VERSION
 home: https://github.com/memcached/memcached
 dependencies:

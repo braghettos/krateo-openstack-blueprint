@@ -1083,5 +1083,5 @@ tls:
 volume:
   accessModes:
   - ReadWriteOnce
-  class_name: general
+  class_name: standard
   size: 2Gi

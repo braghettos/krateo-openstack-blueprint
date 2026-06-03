@@ -16,7 +16,7 @@
 apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Placement
-name: openstack-placement
+name: placement
 version: CHART_VERSION
 home: https://docs.openstack.org/placement/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Placement/OpenStack_Project_Placement_vertical.png

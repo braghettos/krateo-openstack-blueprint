@@ -1,9 +1,9 @@
 apiVersion: core.krateo.io/v1alpha1
 kind: CompositionDefinition
 metadata:
-  name: openstack-memcached
+  name: memcached
   namespace: openstack-system
 spec:
   chart:
-    url: oci://ghcr.io/braghettos/charts/openstack-memcached
+    url: oci://ghcr.io/braghettos/charts/memcached
     version: "0.1.0"

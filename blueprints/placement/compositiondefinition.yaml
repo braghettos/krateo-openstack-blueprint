@@ -1,9 +1,9 @@
 apiVersion: core.krateo.io/v1alpha1
 kind: CompositionDefinition
 metadata:
-  name: openstack-placement
+  name: placement
   namespace: openstack-system
 spec:
   chart:
-    url: oci://ghcr.io/braghettos/charts/openstack-placement
+    url: oci://ghcr.io/braghettos/charts/placement
     version: "0.1.0"

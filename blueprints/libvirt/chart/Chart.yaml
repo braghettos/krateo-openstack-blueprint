@@ -14,7 +14,7 @@
 apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm libvirt
-name: openstack-libvirt
+name: libvirt
 version: CHART_VERSION
 home: https://libvirt.org
 sources:

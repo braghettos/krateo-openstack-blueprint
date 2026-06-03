@@ -14,7 +14,7 @@
 apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Nova
-name: openstack-nova
+name: nova
 version: CHART_VERSION
 home: https://docs.openstack.org/nova/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Nova/OpenStack_Project_Nova_vertical.png

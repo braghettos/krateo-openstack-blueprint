@@ -9,12 +9,15 @@
 {{- $r -}}
 {{- end -}}
 
-{{/* Returns "true" if the component's generated CRD exists. Takes the EXACT
-     CRD plural (Krateo's pluralizer is not a naive "+s":
-     openvswitch -> openvswitches, nova -> nova). */}}
+{{/* Returns "true" if a generated CRD for <kind> in composition.krateo.io exists.
+     Matched by Kind (not a guessed plural), so pluralization can never bite. */}}
 {{- define "osh.crdExists" -}}
-{{- $plural := index . 0 -}}
-{{- if lookup "apiextensions.k8s.io/v1" "CustomResourceDefinition" "" (printf "%s.composition.krateo.io" $plural) -}}true{{- end -}}
+{{- $kind := index . 0 -}}
+{{- $found := "" -}}
+{{- range (lookup "apiextensions.k8s.io/v1" "CustomResourceDefinition" "" "").items -}}
+{{- if and (eq .spec.group "composition.krateo.io") (eq .spec.names.kind $kind) -}}{{- $found = "true" -}}{{- end -}}
+{{- end -}}
+{{- $found -}}
 {{- end -}}
 
 {{/* "true" if every dependency Composition (by component name) is Ready. */}}
@@ -23,7 +26,7 @@
 {{- $all := "true" -}}
 {{- range $d := $deps -}}
   {{- $kind := "" -}}{{- range $c := $comps -}}{{- if eq $c.name $d -}}{{- $kind = $c.kind -}}{{- end -}}{{- end -}}
-  {{- if ne (include "osh.ready" (list $top $kind (printf "openstack-%s" $d))) "true" -}}{{- $all = "" -}}{{- end -}}
+  {{- if ne (include "osh.ready" (list $top $kind $d)) "true" -}}{{- $all = "" -}}{{- end -}}
 {{- end -}}
 {{- $all -}}
 {{- end -}}

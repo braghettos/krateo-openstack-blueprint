@@ -1,9 +1,9 @@
 apiVersion: core.krateo.io/v1alpha1
 kind: CompositionDefinition
 metadata:
-  name: openstack-glance
+  name: glance
   namespace: openstack-system
 spec:
   chart:
-    url: oci://ghcr.io/braghettos/charts/openstack-glance
+    url: oci://ghcr.io/braghettos/charts/glance
     version: "0.1.0"

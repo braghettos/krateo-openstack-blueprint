@@ -14,7 +14,7 @@
 apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm MariaDB
-name: openstack-mariadb
+name: mariadb
 version: CHART_VERSION
 home: https://mariadb.com/kb/en/
 icon: http://badges.mariadb.org/mariadb-badge-180x60.png

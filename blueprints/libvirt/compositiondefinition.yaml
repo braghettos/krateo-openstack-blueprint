@@ -1,9 +1,9 @@
 apiVersion: core.krateo.io/v1alpha1
 kind: CompositionDefinition
 metadata:
-  name: openstack-libvirt
+  name: libvirt
   namespace: openstack-system
 spec:
   chart:
-    url: oci://ghcr.io/braghettos/charts/openstack-libvirt
+    url: oci://ghcr.io/braghettos/charts/libvirt
     version: "0.1.0"

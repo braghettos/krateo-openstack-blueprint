@@ -14,7 +14,7 @@
 apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Keystone
-name: openstack-keystone
+name: keystone
 version: CHART_VERSION
 home: https://docs.openstack.org/keystone/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Keystone/OpenStack_Project_Keystone_vertical.png

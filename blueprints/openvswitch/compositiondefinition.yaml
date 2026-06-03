@@ -1,9 +1,9 @@
 apiVersion: core.krateo.io/v1alpha1
 kind: CompositionDefinition
 metadata:
-  name: openstack-openvswitch
+  name: openvswitch
   namespace: openstack-system
 spec:
   chart:
-    url: oci://ghcr.io/braghettos/charts/openstack-openvswitch
+    url: oci://ghcr.io/braghettos/charts/openvswitch
     version: "0.1.0"

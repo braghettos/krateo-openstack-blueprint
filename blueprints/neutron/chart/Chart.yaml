@@ -14,7 +14,7 @@
 apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Neutron
-name: openstack-neutron
+name: neutron
 version: CHART_VERSION
 home: https://docs.openstack.org/neutron/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Neutron/OpenStack_Project_Neutron_vertical.png

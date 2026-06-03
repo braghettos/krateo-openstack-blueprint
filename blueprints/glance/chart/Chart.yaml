@@ -14,7 +14,7 @@
 apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Glance
-name: openstack-glance
+name: glance
 version: CHART_VERSION
 home: https://docs.openstack.org/glance/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Glance/OpenStack_Project_Glance_vertical.png
