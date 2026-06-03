@@ -1,6 +1,7 @@
-# Full OpenStack-Helm rabbitmq defaults with the blueprint's validated overrides applied
-# (2025.1-ubuntu_jammy images, single-replica, Krateo-CDC-friendly). A small curated
-# subset is overridable per Composition (see values.schema.json).
+# Full OpenStack-Helm rabbitmq defaults with the blueprint's validated overrides.
+# global.subchart_release_name=true makes the statefulset name use the chart name
+# (rabbitmq-rabbitmq) instead of the Krateo release name, so consumers' transport_url
+# host (rabbitmq-rabbitmq-0.rabbitmq) actually resolves.
 conf:
   aux_conf: {}
   bind_address: '::'
@@ -145,6 +146,8 @@ endpoints:
 extraObjects: []
 forceBoot:
   enabled: false
+global:
+  subchart_release_name: true
 images:
   local_registry:
     active: false
