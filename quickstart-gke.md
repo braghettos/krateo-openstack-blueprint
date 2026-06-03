@@ -41,7 +41,19 @@ done
 
 No image pre-loading is needed — GKE nodes are amd64, so the OpenStack images pull and run natively.
 
-## 3. Deploy one OpenStack install (Composition set)
+## 3. Deploy one OpenStack install
+
+**Recommended — the orchestrator** (registers the component blueprints and rolls them out in
+dependency order):
+
+```sh
+kubectl apply -f blueprints/openstack/compositiondefinition.yaml
+kubectl wait compositiondefinition/openstack -n openstack-system --for=condition=Ready --timeout=180s
+kubectl create namespace openstack
+sed 's/profile: identity/profile: full/' examples/openstack.yaml | kubectl apply -f -
+```
+
+**Or the per-component Composition sets** (register the component CompositionDefinitions from step 2 first):
 
 ```sh
 kubectl create namespace openstack

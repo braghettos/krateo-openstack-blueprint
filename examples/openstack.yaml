@@ -1,0 +1,14 @@
+# One orchestrator Composition = one OpenStack installation, rolled out in
+# dependency order. It registers the component CompositionDefinitions and emits
+# each component Composition once its prerequisites are Ready (Helm lookups).
+#   kubectl create namespace openstack
+#   kubectl apply -f examples/openstack.yaml
+apiVersion: composition.krateo.io/v0-1-0
+kind: Openstack
+metadata:
+  name: openstack
+  namespace: openstack
+spec:
+  # identity = MariaDB+Memcached+Keystone+Glance+Horizon
+  # full     = also RabbitMQ+Placement+OVS+libvirt+Neutron+Nova (compute; amd64 + OVS kernel module)
+  profile: identity

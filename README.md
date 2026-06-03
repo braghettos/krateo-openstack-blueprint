@@ -30,6 +30,15 @@ So separate blueprints are correct here. An umbrella would only be required if w
 **generated** secrets — then Keystone/DB/RabbitMQ passwords would become outputs the other
 components consume, which *is* an input→output dependency.
 
+There is, however, a real **ordering** dependency (Keystone must be Ready before Glance/Nova/Neutron
+register), and creating all the Compositions at once races (a slow Keystone install trips Krateo's
+`create-pending` guard). So on top of the per-component blueprints there is an **orchestrator
+umbrella blueprint** (`blueprints/openstack`, Kind `Openstack`): its chart registers all the
+component `CompositionDefinition`s, then emits each component `Composition` only once its CRD exists
+**and** all its dependency Compositions report `Ready=True` (Helm `lookup`, re-evaluated every
+reconcile). One `Openstack` Composition therefore rolls out a whole install in dependency order —
+verified end-to-end (`mariadb`+`memcached` → `keystone` → `glance`+`horizon`, then `token issue`).
+
 ## The blueprints
 
 | Blueprint (`blueprints/<c>`) | Chart / Kind            | Role                        | Tier      |
@@ -45,6 +54,7 @@ components consume, which *is* an input→output dependency.
 | `libvirt`                    | `OpenstackLibvirt`      | libvirt/QEMU hypervisor     | compute   |
 | `nova`                       | `OpenstackNova`         | Compute (VMs, QEMU)         | compute   |
 | `neutron`                    | `OpenstackNeutron`      | Networking (ML2/OVS, VXLAN) | compute   |
+| `openstack`                  | `Openstack`             | **Orchestrator** (sequences the above) | umbrella |
 
 Each blueprint is **self-contained**: `blueprints/<c>/chart/` vendors the OpenStack-Helm chart
 (plus `helm-toolkit`), pinned to release **2025.1 "Epoxy"** (`ubuntu_jammy` images), with the
@@ -65,17 +75,32 @@ curated `values.schema.json` drives each Composition CRD.
 
 ## Install
 
-```sh
-# 1. Register the blueprints you want (each is one CompositionDefinition)
-kubectl create namespace openstack-system
-kubectl apply -f blueprints/keystone/compositiondefinition.yaml
-kubectl apply -f blueprints/mariadb/compositiondefinition.yaml
-# ...and the rest you need (memcached, glance, horizon, rabbitmq, placement, nova, neutron, libvirt, openvswitch)
+### Recommended: one orchestrator Composition
 
-# 2. Deploy one OpenStack install = a set of Compositions in one namespace
+```sh
+# Register only the orchestrator blueprint...
+kubectl create namespace openstack-system
+kubectl apply -f blueprints/openstack/compositiondefinition.yaml
+
+# ...then one Composition rolls out a whole install in dependency order.
 kubectl create namespace openstack
-kubectl apply -f examples/01-identity.yaml      # mariadb, memcached, keystone, glance, horizon
-# kubectl apply -f examples/02-compute.yaml     # rabbitmq, placement, ovs, libvirt, nova, neutron (GKE)
+kubectl apply -f examples/openstack.yaml         # Kind: Openstack, spec.profile: identity | full
+```
+
+The orchestrator registers the component `CompositionDefinition`s itself and emits each component
+`Composition` in order as its dependencies become Ready. `profile: identity` brings up
+MariaDB+Memcached+Keystone+Glance+Horizon; `profile: full` also adds the compute plane (needs an
+amd64 cluster with the OVS kernel module — see [`quickstart-gke.md`](quickstart-gke.md)).
+
+### Or drive the per-component blueprints directly
+
+```sh
+kubectl create namespace openstack-system
+for c in mariadb memcached keystone glance horizon; do
+  kubectl apply -f blueprints/$c/compositiondefinition.yaml; done
+kubectl create namespace openstack
+kubectl apply -f examples/01-identity.yaml       # one Composition per component
+# kubectl apply -f examples/02-compute.yaml      # compute plane (GKE)
 ```
 
 Each Composition's `spec` is the curated chart values (e.g. `images.pull_policy`, replica counts,

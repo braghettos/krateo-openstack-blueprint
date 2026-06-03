@@ -22,35 +22,33 @@ helm upgrade --install core-provider krateo/core-provider \
 tools/kind-load-images.sh openstack         # Apple Silicon only
 ```
 
-## 2. Register the identity blueprints
+## 2. Deploy via the orchestrator (one Composition)
 
 ```sh
 kubectl create namespace openstack-system
-for c in mariadb memcached keystone glance horizon; do
-  kubectl apply -f blueprints/$c/compositiondefinition.yaml
-done
-# each reconciles to Ready=True and generates a CRD, e.g. openstackkeystones.composition.krateo.io
-kubectl get compositiondefinitions -n openstack-system
-```
+kubectl apply -f blueprints/openstack/compositiondefinition.yaml
+kubectl wait compositiondefinition/openstack -n openstack-system --for=condition=Ready --timeout=180s
 
-> If you re-publish a changed chart under the **same** version, restart the analyzers so the CDC
-> RBAC is regenerated (a fresh install does not need this):
-> `kubectl rollout restart deploy/core-provider deploy/core-provider-chart-inspector -n krateo-system`
-
-## 3. Deploy one OpenStack install (a set of Compositions)
-
-```sh
 kubectl create namespace openstack
-kubectl apply -f examples/01-identity.yaml
+kubectl apply -f examples/openstack.yaml          # Kind: Openstack, profile: identity
 ```
 
-`examples/01-identity.yaml` is five Compositions (`OpenstackMariadb`, `OpenstackMemcached`,
-`OpenstackKeystone`, `OpenstackGlance`, `OpenstackHorizon`) in namespace `openstack`. They
-self-order via OpenStack-Helm's `kubernetes-entrypoint` dep-checks.
+The orchestrator registers the component CompositionDefinitions and emits each component
+Composition in dependency order (mariadb+memcached -> keystone -> glance+horizon), each gated on
+the previous being Ready. Watch it roll out:
 
 ```sh
+kubectl get compositiondefinitions -n openstack    # the components it registered
+kubectl get openstackmariadb,openstackmemcached,openstackkeystone,openstackglance,openstackhorizon -n openstack
 kubectl -n openstack rollout status deploy/keystone-api --timeout=600s
 ```
+
+> Prefer the per-component path instead? Register `blueprints/<c>/compositiondefinition.yaml` for
+> mariadb, memcached, keystone, glance, horizon and `kubectl apply -f examples/01-identity.yaml`.
+
+> If you re-publish a changed chart under the **same** version, restart the analyzers so the CDC
+> RBAC/chart cache is refreshed:
+> `kubectl rollout restart deploy/core-provider deploy/core-provider-chart-inspector -n krateo-system`
 
 ## 4. Verify
 
