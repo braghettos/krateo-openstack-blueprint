@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "title": "OpenStack (orchestrator)",
+  "description": "Orchestrates the per-component OpenStack blueprints into one ordered, readiness-gated install. Create one Composition of this Kind per OpenStack installation (one per namespace).",
+  "properties": {
+    "profile": {
+      "type": "string",
+      "title": "Profile",
+      "description": "identity = MariaDB+Memcached+Keystone+Glance+Horizon; full = also RabbitMQ+Placement+OVS+libvirt+Neutron+Nova (compute, needs an amd64 cluster with the OVS kernel module).",
+      "enum": ["identity", "full"],
+      "default": "identity"
+    },
+    "installDefinitions": {
+      "type": "boolean",
+      "title": "Register component CompositionDefinitions",
+      "description": "Also register each component blueprint's CompositionDefinition as the first step.",
+      "default": true
+    },
+    "ociRepo": {
+      "type": "string",
+      "title": "OCI chart repository",
+      "description": "Registry path holding the per-component blueprint charts (openstack-<component>).",
+      "default": "oci://ghcr.io/braghettos/charts"
+    },
+    "chartVersion": {
+      "type": "string",
+      "title": "Component chart version",
+      "default": "0.1.0"
+    }
+  }
+}

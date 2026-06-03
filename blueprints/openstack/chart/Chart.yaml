@@ -1,0 +1,20 @@
+apiVersion: v2
+# Umbrella ORCHESTRATOR blueprint. It does not bundle the OpenStack charts; it
+# sequences the per-component blueprints (blueprints/<c>) into one ordered install:
+#   1. registers every component CompositionDefinition (installDefinitions=true), then
+#   2. emits each component Composition only once its prerequisites' Compositions
+#      report Ready=True and the component's generated CRD exists (Helm `lookup`).
+# The orchestrator's controller re-reconciles, so each pass `lookup` sees more
+# components become ready and emits the next — an ordered, readiness-gated rollout
+# that avoids the all-at-once race (e.g. Keystone's slow install tripping the
+# create-pending guard). Kind: Openstack.
+name: openstack
+description: Krateo umbrella that orchestrates the per-component OpenStack blueprints into one ordered, readiness-gated installation.
+type: application
+version: CHART_VERSION
+appVersion: "2025.1"
+home: https://krateo.io
+icon: "https://github.com/krateoplatformops/krateo/blob/main/docs/media/logo.svg"
+keywords: [openstack, orchestrator, umbrella]
+sources:
+  - https://github.com/braghettos/krateo-openstack-blueprint

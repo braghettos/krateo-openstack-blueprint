@@ -1,0 +1,9 @@
+apiVersion: core.krateo.io/v1alpha1
+kind: CompositionDefinition
+metadata:
+  name: openstack
+  namespace: openstack-system
+spec:
+  chart:
+    url: oci://ghcr.io/braghettos/charts/openstack
+    version: "0.1.0"

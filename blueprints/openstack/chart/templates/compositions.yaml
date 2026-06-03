@@ -1,0 +1,19 @@
+{{- /* Step 2: emit each Composition only when its CRD exists and all its
+       dependency Compositions report Ready=True (Helm lookup, re-evaluated each
+       reconcile). On the first pass only zero-dependency components render; later
+       passes unlock the rest in order. */ -}}
+{{- range $c := .Values.components }}
+{{- if or (eq $.Values.profile "full") (eq $c.tier "identity") }}
+{{- $crd := include "osh.crdExists" (list $c.name) }}
+{{- $deps := include "osh.depsReady" (list $ $c.deps $.Values.components) }}
+{{- if and (eq $crd "true") (eq $deps "true") }}
+---
+apiVersion: composition.krateo.io/v0-1-0
+kind: {{ $c.kind }}
+metadata:
+  name: openstack-{{ $c.name }}
+  namespace: {{ $.Release.Namespace }}
+spec: {}
+{{- end }}
+{{- end }}
+{{- end }}

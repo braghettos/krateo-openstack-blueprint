@@ -1,0 +1,23 @@
+# Orchestrator configuration.
+# ociRepo: where the per-component blueprint charts are published.
+ociRepo: oci://ghcr.io/braghettos/charts
+chartVersion: "0.1.0"
+# installDefinitions: also register the component CompositionDefinitions.
+installDefinitions: true
+# profile: "identity" (mariadb,memcached,keystone,glance,horizon) or "full" (adds compute).
+profile: identity
+
+# The component DAG. `deps` are component names whose Compositions must be Ready
+# before this one's Composition is emitted. `tier`: identity or compute.
+components:
+  - {name: mariadb,     kind: OpenstackMariadb,     deps: [],                                          tier: identity}
+  - {name: memcached,   kind: OpenstackMemcached,   deps: [],                                          tier: identity}
+  - {name: keystone,    kind: OpenstackKeystone,    deps: [mariadb, memcached],                        tier: identity}
+  - {name: glance,      kind: OpenstackGlance,      deps: [keystone],                                  tier: identity}
+  - {name: horizon,     kind: OpenstackHorizon,     deps: [keystone],                                  tier: identity}
+  - {name: rabbitmq,    kind: OpenstackRabbitmq,    deps: [],                                          tier: compute}
+  - {name: openvswitch, kind: OpenstackOpenvswitch, deps: [],                                          tier: compute}
+  - {name: placement,   kind: OpenstackPlacement,   deps: [keystone],                                  tier: compute}
+  - {name: libvirt,     kind: OpenstackLibvirt,     deps: [openvswitch],                               tier: compute}
+  - {name: neutron,     kind: OpenstackNeutron,     deps: [keystone, rabbitmq, openvswitch],           tier: compute}
+  - {name: nova,        kind: OpenstackNova,        deps: [keystone, placement, rabbitmq, glance, neutron, libvirt], tier: compute}

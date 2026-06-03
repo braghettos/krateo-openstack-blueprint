@@ -1,0 +1,17 @@
+{{- /* Step 1: register each component's CompositionDefinition. */ -}}
+{{- if .Values.installDefinitions }}
+{{- range $c := .Values.components }}
+{{- if or (eq $.Values.profile "full") (eq $c.tier "identity") }}
+---
+apiVersion: core.krateo.io/v1alpha1
+kind: CompositionDefinition
+metadata:
+  name: openstack-{{ $c.name }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  chart:
+    url: {{ $.Values.ociRepo }}/openstack-{{ $c.name }}
+    version: {{ $.Values.chartVersion | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
