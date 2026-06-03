@@ -8,7 +8,7 @@
 {{- $deps := include "osh.depsReady" (list $ $c.deps $.Values.components) }}
 {{- if and (eq $crd "true") (eq $deps "true") }}
 ---
-apiVersion: composition.krateo.io/v0-1-0
+apiVersion: {{ include "osh.apiVersion" (list $) }}
 kind: {{ $c.kind }}
 metadata:
   name: {{ $c.name }}

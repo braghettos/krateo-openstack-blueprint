@@ -2,42 +2,42 @@
 # amd64 cluster with the Open vSwitch kernel module (e.g. Ubuntu GKE nodes) and node
 # labels (openstack-compute-node/openvswitch/l3-agent=enabled). See quickstart-gke.md.
 ---
-apiVersion: composition.krateo.io/v0-1-0
+apiVersion: composition.krateo.io/v0-1-1
 kind: Rabbitmq
 metadata:
   name: rabbitmq
   namespace: openstack
 spec: {}
 ---
-apiVersion: composition.krateo.io/v0-1-0
+apiVersion: composition.krateo.io/v0-1-1
 kind: Placement
 metadata:
   name: placement
   namespace: openstack
 spec: {}
 ---
-apiVersion: composition.krateo.io/v0-1-0
+apiVersion: composition.krateo.io/v0-1-1
 kind: Openvswitch
 metadata:
   name: openvswitch
   namespace: openstack
 spec: {}
 ---
-apiVersion: composition.krateo.io/v0-1-0
+apiVersion: composition.krateo.io/v0-1-1
 kind: Libvirt
 metadata:
   name: libvirt
   namespace: openstack
 spec: {}
 ---
-apiVersion: composition.krateo.io/v0-1-0
+apiVersion: composition.krateo.io/v0-1-1
 kind: Neutron
 metadata:
   name: neutron
   namespace: openstack
 spec: {}
 ---
-apiVersion: composition.krateo.io/v0-1-0
+apiVersion: composition.krateo.io/v0-1-1
 kind: Nova
 metadata:
   name: nova

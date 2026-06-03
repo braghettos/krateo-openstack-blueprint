@@ -1,7 +1,15 @@
+{{/* The composition.krateo.io apiVersion served by the component CRDs, derived
+     from chartVersion (crdgen maps version 0.1.1 -> apiVersion v0-1-1). Keeping
+     this in one place means a version bump never strands a hardcoded v0-1-0. */}}
+{{- define "osh.apiVersion" -}}
+{{- $top := index . 0 -}}
+{{- printf "composition.krateo.io/v%s" ($top.Values.chartVersion | toString | replace "." "-") -}}
+{{- end -}}
+
 {{/* Returns "true" if a Composition of <kind>/<name> reports Ready=True. */}}
 {{- define "osh.ready" -}}
 {{- $top := index . 0 -}}{{- $kind := index . 1 -}}{{- $name := index . 2 -}}
-{{- $o := lookup "composition.krateo.io/v0-1-0" $kind $top.Release.Namespace $name -}}
+{{- $o := lookup (include "osh.apiVersion" (list $top)) $kind $top.Release.Namespace $name -}}
 {{- $r := "" -}}
 {{- if $o -}}{{- range ($o.status.conditions | default list) -}}
 {{- if and (eq .type "Ready") (eq (.status | toString) "True") -}}{{- $r = "true" -}}{{- end -}}

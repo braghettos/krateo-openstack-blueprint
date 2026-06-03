@@ -3,7 +3,7 @@
 # each component Composition once its prerequisites are Ready (Helm lookups).
 #   kubectl create namespace openstack
 #   kubectl apply -f examples/openstack.yaml
-apiVersion: composition.krateo.io/v0-1-0
+apiVersion: composition.krateo.io/v0-1-1
 kind: Openstack
 metadata:
   name: openstack
