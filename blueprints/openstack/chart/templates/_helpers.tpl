@@ -9,10 +9,12 @@
 {{- $r -}}
 {{- end -}}
 
-{{/* Returns "true" if the component's generated CRD exists. */}}
+{{/* Returns "true" if the component's generated CRD exists. Takes the EXACT
+     CRD plural (Krateo's pluralizer is not a naive "+s":
+     openvswitch -> openvswitches, nova -> nova). */}}
 {{- define "osh.crdExists" -}}
-{{- $name := index . 0 -}}
-{{- if lookup "apiextensions.k8s.io/v1" "CustomResourceDefinition" "" (printf "openstack%ss.composition.krateo.io" $name) -}}true{{- end -}}
+{{- $plural := index . 0 -}}
+{{- if lookup "apiextensions.k8s.io/v1" "CustomResourceDefinition" "" (printf "%s.composition.krateo.io" $plural) -}}true{{- end -}}
 {{- end -}}
 
 {{/* "true" if every dependency Composition (by component name) is Ready. */}}

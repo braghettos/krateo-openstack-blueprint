@@ -8,16 +8,18 @@ installDefinitions: true
 profile: identity
 
 # The component DAG. `deps` are component names whose Compositions must be Ready
-# before this one's Composition is emitted. `tier`: identity or compute.
+# before this one's Composition is emitted. `plural` is the EXACT generated CRD
+# plural (Krateo's pluralizer is not a naive "+s": openvswitch -> openvswitches,
+# nova -> nova). `tier`: identity or compute.
 components:
-  - {name: mariadb,     kind: OpenstackMariadb,     deps: [],                                          tier: identity}
-  - {name: memcached,   kind: OpenstackMemcached,   deps: [],                                          tier: identity}
-  - {name: keystone,    kind: OpenstackKeystone,    deps: [mariadb, memcached],                        tier: identity}
-  - {name: glance,      kind: OpenstackGlance,      deps: [keystone],                                  tier: identity}
-  - {name: horizon,     kind: OpenstackHorizon,     deps: [keystone],                                  tier: identity}
-  - {name: rabbitmq,    kind: OpenstackRabbitmq,    deps: [],                                          tier: compute}
-  - {name: openvswitch, kind: OpenstackOpenvswitch, deps: [],                                          tier: compute}
-  - {name: placement,   kind: OpenstackPlacement,   deps: [keystone],                                  tier: compute}
-  - {name: libvirt,     kind: OpenstackLibvirt,     deps: [openvswitch],                               tier: compute}
-  - {name: neutron,     kind: OpenstackNeutron,     deps: [keystone, rabbitmq, openvswitch],           tier: compute}
-  - {name: nova,        kind: OpenstackNova,        deps: [keystone, placement, rabbitmq, glance, neutron, libvirt], tier: compute}
+  - {name: mariadb,     kind: OpenstackMariadb,     plural: openstackmariadbs,      deps: [],                                          tier: identity}
+  - {name: memcached,   kind: OpenstackMemcached,   plural: openstackmemcacheds,    deps: [],                                          tier: identity}
+  - {name: keystone,    kind: OpenstackKeystone,    plural: openstackkeystones,     deps: [mariadb, memcached],                        tier: identity}
+  - {name: glance,      kind: OpenstackGlance,      plural: openstackglances,       deps: [keystone],                                  tier: identity}
+  - {name: horizon,     kind: OpenstackHorizon,     plural: openstackhorizons,      deps: [keystone],                                  tier: identity}
+  - {name: rabbitmq,    kind: OpenstackRabbitmq,    plural: openstackrabbitmqs,     deps: [],                                          tier: compute}
+  - {name: openvswitch, kind: OpenstackOpenvswitch, plural: openstackopenvswitches, deps: [],                                          tier: compute}
+  - {name: placement,   kind: OpenstackPlacement,   plural: openstackplacements,    deps: [keystone],                                  tier: compute}
+  - {name: libvirt,     kind: OpenstackLibvirt,     plural: openstacklibvirts,      deps: [openvswitch],                               tier: compute}
+  - {name: neutron,     kind: OpenstackNeutron,     plural: openstackneutrons,      deps: [keystone, rabbitmq, openvswitch],           tier: compute}
+  - {name: nova,        kind: OpenstackNova,        plural: openstacknova,          deps: [keystone, placement, rabbitmq, glance, neutron, libvirt], tier: compute}
