@@ -1,6 +1,3 @@
-# Full OpenStack-Helm placement defaults with the blueprint's validated overrides applied
-# (2025.1-ubuntu_jammy images, single-replica, Krateo-CDC-friendly). A small curated
-# subset is overridable per Composition (see values.schema.json).
 conf:
   logging:
     formatter_context:
@@ -236,6 +233,10 @@ endpoints:
       mysql:
         default: 3306
     scheme: mysql+pymysql
+  oslo_messaging:
+    statefulset:
+      name: rabbitmq-rabbitmq
+      replicas: 1
   placement:
     host_fqdn_override:
       default: null

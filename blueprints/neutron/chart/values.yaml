@@ -1,6 +1,3 @@
-# Full OpenStack-Helm neutron defaults with the blueprint's validated overrides applied
-# (2025.1-ubuntu_jammy images, single-replica, Krateo-CDC-friendly). A small curated
-# subset is overridable per Composition (see values.schema.json).
 bootstrap:
   enabled: false
   ks_user: neutron
@@ -1867,7 +1864,7 @@ endpoints:
     scheme: rabbit
     statefulset:
       name: rabbitmq-rabbitmq
-      replicas: 2
+      replicas: 1
 extraObjects: []
 health_probe:
   logging:
