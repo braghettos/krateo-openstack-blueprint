@@ -100,6 +100,43 @@ spec: { profile: full }
 
 ---
 
+## The reconcile loop *is* a state machine
+
+It's worth being precise about *why* this works, because it's the crux of
+the design. Krateo's composition-dynamic-controller (CDC) is a **level-
+triggered** controller: it reconciles the `Openstack` Composition on a
+loop, and **each reconcile re-renders the umbrella chart from scratch**.
+
+The trick is that the umbrella's `lookup` calls run *at render time,
+against live cluster state* — they ask "does the `Keystone` CRD exist?",
+"is the `keystone` Composition `Ready=True`?" — every single pass. So the
+set of component Compositions the chart emits is a **pure function of what
+the controller observes right now**. No stored progress, no edge-triggered
+events, no ordering logic in code: just *current state → rendered output*.
+
+That turns the rollout into a deterministic **state machine** that the
+controller walks to a fixed point:
+
+![The CDC reconcile loop as a state machine: each pass re-evaluates the Helm lookups against live cluster state and advances one tier as its dependencies report Ready, from an empty cluster to a converged OpenStack, after which reconciles are no-ops.](diagram-reconcile-state-machine.png)
+
+- **S0 → S1:** on the first pass only the zero-dependency tier (`mariadb`,
+  `memcached`) satisfies its gate, so only those render.
+- **S1 → S2 → S3 → …:** each later reconcile notices the previous tier is
+  now `Ready` and unlocks the next, exactly the way a state machine
+  advances on a guard becoming true.
+- **S5 (converged):** once everything is up, every lookup still resolves
+  the same way, the rendered manifest stops changing, and reconciles
+  become **no-ops**.
+
+Because it's level-triggered rather than firing once on an event, it's
+also **self-correcting**: delete a component and the next reconcile simply
+re-emits it. The "ordering logic" you'd normally hand-write in an operator
+is, here, an emergent property of pure-function rendering over observed
+state. (`profile: identity` stops the machine at S3; `profile: full` runs
+it to S5.)
+
+---
+
 ## The bugs that only show up for real
 
 None of these failed CI. All of them failed the first time we booted a VM.
