@@ -45,8 +45,8 @@ subchart. We deliberately didn't. The rule we followed:
 We checked OpenStack-Helm against that rule and found:
 
 - **No input→output dependencies.** Every cross-component reference is
-  *static configuration* — a fixed Service DNS name (`keystone`,
-  `mariadb`, `rabbitmq`) plus shared static passwords. No chart reads
+  *static configuration* — a fixed Service DNS name (keystone, mariadb,
+  rabbitmq) plus shared static passwords. No chart reads
   another's runtime output. The helm-toolkit `*_lookup` helpers are
   compile-time template functions over a static `endpoints` map, not
   Kubernetes runtime lookups.
@@ -57,11 +57,10 @@ We checked OpenStack-Helm against that rule and found:
   namespace — Glance waits for the `keystone-api` Service no matter which
   blueprint created it.
 
-So eleven small, independent blueprints — `mariadb`, `memcached`,
-`keystone`, `glance`, `horizon` (identity) and `rabbitmq`, `placement`,
-`openvswitch`, `libvirt`, `nova`, `neutron` (compute) — each vendoring its
-OpenStack-Helm chart with a curated `values.schema.json`. Clean,
-composable, individually testable.
+So eleven small, independent blueprints — mariadb, memcached, keystone,
+glance, horizon (identity) and rabbitmq, placement, openvswitch, libvirt,
+nova, neutron (compute) — each vendoring its OpenStack-Helm chart with a
+curated `values.schema.json`. Clean, composable, individually testable.
 
 ## …with one orchestrator on top
 
