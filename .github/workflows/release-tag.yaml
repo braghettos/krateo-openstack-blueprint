@@ -32,9 +32,6 @@ jobs:
       - name: Stamp chart version
         run: sed -i "s/CHART_VERSION/${VERSION}/g" ./chart/Chart.yaml
 
-      - name: Build chart dependencies (vendored)
-        run: helm dependency build ./chart
-
       - name: Log in to GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | \
