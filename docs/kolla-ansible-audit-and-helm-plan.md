@@ -234,3 +234,35 @@ Audited at `ansible/roles/opensearch/` + `group_vars/all/opensearch.yml`. Covera
 - **TLS:** engine HTTP plain; TLS terminated at HAProxy. CA-into-container via `service-cert-copy` for outbound trust; dashboards verifies upstream via `openstack_cacert`.
 - **Quirks a Helm layer must replicate:** post-deploy **ISM retention policy** create+attach (idempotent API Job), dashboards **index-pattern** create (saved-objects API), legacy `elasticsearch_*` var fallbacks, security-disabled (must not expose directly), fixed `1g` heap (expose as tunable).
 - **helm_notes:** model as a **StatefulSet like mariadb** (each pod master+data, one PVC at `/var/lib/opensearch/data`); discovery via **headless Service DNS** replacing seed_hosts/initial_master_nodes; derive `recover_after_data_nodes = floor(replicas*2/3)` and `expected_data_nodes = replicas` from a single `replicas` input; rolling update wraps the disable-allocation→flush→restart→re-enable sequence; two post-deploy Jobs (ISM policy, dashboards index-pattern); publish internal Service DNS+port as the contract value fluentd/prometheus/cloudkitty/grafana wire to. Few inputs to expose: `cluster_name`, `replicas`, `heap_size`, `http_port`, soft/hard retention, `log_index_prefix`.
+
+---
+
+## Appendix B — offline validation results (Phases 1–3 + traps)
+
+Validated with helm 3.19 against the vendored charts (temp copies with a real chart
+version), no cluster. See `distribution/identity-derive-poc/` and `tools/assert-deterministic.sh`.
+
+- **Phase 1 (derivation):** the `osh-derive.*` helpers generate keystone's full endpoints
+  tree from a small `global:` input — **11 operator inputs → 45 generated leaf-values (4.1x)**;
+  9 of the 11 inputs are shared, so each added service costs ~1 input (its port).
+- **Phase 2 (real chart consumes derived values, non-invasive):** `osh-derive.keystone.overlay`
+  merged via `-f` over the **unmodified** `blueprints/keystone/chart` drives the whole render —
+  `global.namespace=openstack` propagates to the identity endpoint
+  (`keystone-api.openstack.svc.cluster.local:5000/v3`) and every kubernetes-entrypoint dep list
+  (`openstack:memcached,openstack:mariadb`); `global.endpoints.identity.port=5001` moves the port.
+- **Determinism:** the full 3312-line real keystone render is **byte-identical across two passes**
+  (the `memcache_secret_key` + `rabbitmq replicas:1` pins hold).
+- **Tier compose:** rendering keystone + mariadb + memcached in namespace `openstack` from one
+  input yields consistent cross-references — keystone.conf points at
+  `mariadb.openstack.svc.cluster.local:3306`, `memcached.openstack…:11211`,
+  `rabbitmq-rabbitmq-0.rabbitmq.openstack…:5672`, exactly where mariadb/memcached/rabbitmq deploy.
+- **MultiStrOpts trap (confirmed, with the fix):** `helm-toolkit.utils.to_oslo_conf` renders a
+  **bare YAML list as comma-joined** (`driver = messagingv2,log`) — wrong for a genuine oslo
+  `MultiStrOpt`. The correct repeated-line form requires the explicit map
+  `driver: {type: multistring, values: [...]}` → `driver = messagingv2` / `driver = log`.
+  **Rule for the derivation layer:** `osh-derive.conf.*` must emit `type: multistring` maps for
+  MultiStrOpts, never bare lists; add a lint that flags bare lists on known MultiStrOpt keys.
+
+**Status:** the engine (Phases 1–3) is proven offline. Remaining open edge: Phase 3 passwords are
+not yet wired into the overlay (chart keeps default `password` literals). Phases 5–9
+(stateful bootstrap, lifecycle DAG, HA, TLS, ironic boot-infra) need live-cluster validation.
