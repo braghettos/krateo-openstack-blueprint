@@ -266,3 +266,22 @@ version), no cluster. See `distribution/identity-derive-poc/` and `tools/assert-
 **Status:** the engine (Phases 1–3) is proven offline. Remaining open edge: Phase 3 passwords are
 not yet wired into the overlay (chart keeps default `password` literals). Phases 5–9
 (stateful bootstrap, lifecycle DAG, HA, TLS, ironic boot-infra) need live-cluster validation.
+
+### Appendix B.1 — live smoke test (local kind, arm64/qemu)
+
+GKE was blocked by a hard 32-vCPU project quota (increase rejected), so the identity tier was
+validated on a local **kind** cluster (darwin/arm64, amd64 images under qemu emulation; per the
+project's validated keystone-on-kind recipe). mariadb + memcached + keystone installed with the
+**global-derived endpoints overlay** (namespace=openstack, derived FQDNs) and `pull_policy=IfNotPresent`.
+
+Result — the derivation produced a **working** Keystone, not just a valid render:
+- `keystone-db-init` / `db-sync` Completed → keystone connected to the derived
+  `mariadb.openstack.svc.cluster.local:3306` and synced its schema.
+- `keystone-bootstrap` Completed; `keystone-api` 1/1 Ready.
+- `openstack token issue` → a valid Fernet token.
+- `openstack endpoint list` → keystone registered at the **derived** internal endpoint
+  `http://keystone-api.openstack.svc.cluster.local:5000/v3`.
+
+This closes the live-validation gate for Phases 1-3: the kolla-style "few inputs -> full config"
+engine deploys a functioning OpenStack identity service. Phases 5-9 (stateful bootstrap HA, lifecycle
+DAG, TLS, ironic boot-infra) remain for real multi-node infrastructure.
