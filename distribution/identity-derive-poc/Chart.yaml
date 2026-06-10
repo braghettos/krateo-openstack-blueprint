@@ -1,0 +1,10 @@
+apiVersion: v2
+name: identity-derive-poc
+description: |
+  PoC for Phase 1+3 of the kolla-style Helm distribution plan. Derives the verbose
+  openstack-helm endpoints tree (identity/oslo_db/oslo_cache/oslo_messaging) for the
+  identity tier from a small global input, and generates credentials once
+  (lookup + resource-policy keep), mirroring kolla-ansible globals.yml + kolla-genpwd.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

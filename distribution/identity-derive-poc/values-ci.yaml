@@ -1,0 +1,12 @@
+# CI / dry-run overlay: provided-mode passwords make `helm template` byte-deterministic
+# (lookup is empty during template/dry-run, so generate-mode is intentionally
+# non-deterministic at render time - it stabilises at apply-time via resource-policy keep).
+global:
+  passwords:
+    mode: provided
+    provided:
+      keystone_admin: ci-keystone-admin-fixed
+      keystone_db: ci-keystone-db-fixed
+      mariadb_root: ci-mariadb-root-fixed
+      memcache_secret_key: ci-memcache-secret-key-fixed-0000000000000000000000000000000000000000
+      rabbitmq: ci-rabbitmq-fixed
