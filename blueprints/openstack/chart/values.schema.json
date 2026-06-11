@@ -8,11 +8,17 @@
       "type": "string",
       "title": "Profile",
       "description": "identity = MariaDB+Memcached+Keystone+Glance+Horizon; full = also RabbitMQ+Placement+OVS+libvirt+Neutron+Nova (compute, needs an amd64 cluster with the OVS kernel module).",
-      "enum": ["identity", "full"],
+      "enum": [
+        "identity",
+        "full"
+      ],
       "default": "identity"
     },
     "enabled": {
-      "type": ["array", "null"],
+      "type": [
+        "array",
+        "null"
+      ],
       "title": "Explicit component selection",
       "description": "Deploy exactly these components plus their transitive dependencies, overriding profile. E.g. [\"heat\"] also brings up keystone, rabbitmq, mariadb and memcached. Empty uses profile.",
       "items": {
@@ -36,6 +42,1674 @@
       "type": "string",
       "title": "Component chart version",
       "default": "0.2.0"
+    },
+    "componentValues": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "title": "Per-component spec overrides",
+      "description": "Per-component Composition spec overrides, STRICTLY TYPED against each component's chart schema (regenerated per release by hack/gen-componentvalues-schema.py). The value at componentValues.<name> becomes that component's Composition spec; components without an entry use chart defaults.",
+      "additionalProperties": false,
+      "properties": {
+        "mariadb": {
+          "type": "object",
+          "description": "Overrides for the mariadb Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "server": {
+                      "type": "integer",
+                      "title": "MariaDB server replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "memcached": {
+          "type": "object",
+          "description": "Overrides for the memcached Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            }
+          }
+        },
+        "keystone": {
+          "type": "object",
+          "description": "Overrides for the keystone Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Keystone API replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "glance": {
+          "type": "object",
+          "description": "Overrides for the glance Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Glance API replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "horizon": {
+          "type": "object",
+          "description": "Overrides for the horizon Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "server": {
+                      "type": "integer",
+                      "title": "Horizon replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            },
+            "network": {
+              "type": "object",
+              "title": "Network",
+              "properties": {
+                "dashboard": {
+                  "type": "object",
+                  "title": "Dashboard",
+                  "properties": {
+                    "service": {
+                      "type": "object",
+                      "title": "Service",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "title": "Service type",
+                          "description": "How to expose Horizon. NodePort (default; uses the NodePort below), LoadBalancer (external L4 LB + public IP on GKE/EKS/AKS), or ClusterIP (in-cluster only).",
+                          "enum": [
+                            "NodePort",
+                            "LoadBalancer",
+                            "ClusterIP"
+                          ],
+                          "default": "NodePort"
+                        },
+                        "annotations": {
+                          "type": "object",
+                          "title": "Service annotations",
+                          "description": "Annotations for the Service, e.g. cloud LB controls (internal LB, static IP, ...).",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "node_port": {
+                  "type": "object",
+                  "title": "NodePort",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "title": "Expose on NodePort",
+                      "default": true
+                    },
+                    "port": {
+                      "type": "integer",
+                      "title": "Dashboard NodePort",
+                      "minimum": 30000,
+                      "maximum": 32767,
+                      "default": 31000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "rabbitmq": {
+          "type": "object",
+          "description": "Overrides for the rabbitmq Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "server": {
+                      "type": "integer",
+                      "title": "RabbitMQ server replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "openvswitch": {
+          "type": "object",
+          "description": "Overrides for the openvswitch Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            }
+          }
+        },
+        "placement": {
+          "type": "object",
+          "description": "Overrides for the placement Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Placement API replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "libvirt": {
+          "type": "object",
+          "description": "Overrides for the libvirt Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            }
+          }
+        },
+        "neutron": {
+          "type": "object",
+          "description": "Overrides for the neutron Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "network": {
+              "type": "object",
+              "title": "Network",
+              "properties": {
+                "interface": {
+                  "type": "object",
+                  "properties": {
+                    "tunnel": {
+                      "type": "string",
+                      "title": "Tunnel interface",
+                      "description": "Host NIC used as the VXLAN tunnel endpoint (e.g. ens4 on GKE/GCE).",
+                      "default": "ens4"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "nova": {
+          "type": "object",
+          "description": "Overrides for the nova Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            }
+          }
+        },
+        "ironic": {
+          "type": "object",
+          "description": "Overrides for the ironic Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pod",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replica counts",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "ironic-api replicas",
+                      "minimum": 1,
+                      "default": 1
+                    },
+                    "conductor": {
+                      "type": "integer",
+                      "title": "ironic-conductor replicas",
+                      "minimum": 1,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            },
+            "labels": {
+              "type": "object",
+              "title": "Scheduling labels",
+              "properties": {
+                "conductor": {
+                  "type": "object",
+                  "title": "Conductor node selector",
+                  "description": "The conductor uses hostNetwork for PXE/TFTP/HTTP-boot and must land on a node attached to the provisioning network.",
+                  "properties": {
+                    "node_selector_key": {
+                      "type": "string",
+                      "default": "openstack-control-plane"
+                    },
+                    "node_selector_value": {
+                      "type": "string",
+                      "default": "enabled"
+                    }
+                  }
+                }
+              }
+            },
+            "network": {
+              "type": "object",
+              "title": "Provisioning network",
+              "properties": {
+                "pxe": {
+                  "type": "object",
+                  "title": "PXE / provisioning",
+                  "properties": {
+                    "device": {
+                      "type": "string",
+                      "title": "Provisioning NIC",
+                      "description": "Host interface name inside the conductor pod used for PXE/TFTP (PROVISIONER_INTERFACE).",
+                      "default": "ironic-pxe"
+                    },
+                    "neutron_provider_network": {
+                      "type": "string",
+                      "title": "Provider network type/name",
+                      "default": "ironic"
+                    },
+                    "neutron_subnet_cidr": {
+                      "type": "string",
+                      "title": "Provisioning subnet CIDR",
+                      "default": "172.24.6.0/24"
+                    },
+                    "neutron_subnet_gateway": {
+                      "type": "string",
+                      "title": "Provisioning subnet gateway",
+                      "default": "172.24.6.1/24"
+                    },
+                    "neutron_subnet_alloc_start": {
+                      "type": "string",
+                      "title": "DHCP allocation start",
+                      "default": "172.24.6.100"
+                    },
+                    "neutron_subnet_alloc_end": {
+                      "type": "string",
+                      "title": "DHCP allocation end",
+                      "default": "172.24.6.200"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "cinder": {
+          "type": "object",
+          "description": "Overrides for the cinder Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Cinder API replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "scheduler": {
+                      "type": "integer",
+                      "title": "Cinder scheduler replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "volume": {
+                      "type": "integer",
+                      "title": "Cinder volume replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "heat": {
+          "type": "object",
+          "description": "Overrides for the heat Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Heat API (orchestration) replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "cfn": {
+                      "type": "integer",
+                      "title": "Heat CFN API (cloudformation) replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "engine": {
+                      "type": "integer",
+                      "title": "Heat engine replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "barbican": {
+          "type": "object",
+          "description": "Overrides for the barbican Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Barbican API replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "designate": {
+          "type": "object",
+          "description": "Overrides for the designate Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Designate api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "central": {
+                      "type": "integer",
+                      "title": "Designate central replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "mdns": {
+                      "type": "integer",
+                      "title": "Designate mdns replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "producer": {
+                      "type": "integer",
+                      "title": "Designate producer replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "sink": {
+                      "type": "integer",
+                      "title": "Designate sink replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "worker": {
+                      "type": "integer",
+                      "title": "Designate worker replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "octavia": {
+          "type": "object",
+          "description": "Overrides for the octavia Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Octavia api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "driver_agent": {
+                      "type": "integer",
+                      "title": "Octavia driver_agent replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "housekeeping": {
+                      "type": "integer",
+                      "title": "Octavia housekeeping replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "magnum": {
+          "type": "object",
+          "description": "Overrides for the magnum Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Magnum api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "conductor": {
+                      "type": "integer",
+                      "title": "Magnum conductor replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "manila": {
+          "type": "object",
+          "description": "Overrides for the manila Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Manila api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "data": {
+                      "type": "integer",
+                      "title": "Manila data replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "scheduler": {
+                      "type": "integer",
+                      "title": "Manila scheduler replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "share": {
+                      "type": "integer",
+                      "title": "Manila share replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "mistral": {
+          "type": "object",
+          "description": "Overrides for the mistral Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Mistral api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "engine": {
+                      "type": "integer",
+                      "title": "Mistral engine replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "event_engine": {
+                      "type": "integer",
+                      "title": "Mistral event_engine replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "executor": {
+                      "type": "integer",
+                      "title": "Mistral executor replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ceilometer": {
+          "type": "object",
+          "description": "Overrides for the ceilometer Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "central": {
+                      "type": "integer",
+                      "title": "Ceilometer central replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "notification": {
+                      "type": "integer",
+                      "title": "Ceilometer notification replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "aodh": {
+          "type": "object",
+          "description": "Overrides for the aodh Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Aodh api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "evaluator": {
+                      "type": "integer",
+                      "title": "Aodh evaluator replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "listener": {
+                      "type": "integer",
+                      "title": "Aodh listener replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "notifier": {
+                      "type": "integer",
+                      "title": "Aodh notifier replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "cloudkitty": {
+          "type": "object",
+          "description": "Overrides for the cloudkitty Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "cloudkitty_api": {
+                      "type": "integer",
+                      "title": "Cloudkitty cloudkitty_api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "cloudkitty_processor": {
+                      "type": "integer",
+                      "title": "Cloudkitty cloudkitty_processor replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "masakari": {
+          "type": "object",
+          "description": "Overrides for the masakari Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "masakari_api": {
+                      "type": "integer",
+                      "title": "Masakari masakari_api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "masakari_engine": {
+                      "type": "integer",
+                      "title": "Masakari masakari_engine replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "trove": {
+          "type": "object",
+          "description": "Overrides for the trove Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Trove api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "conductor": {
+                      "type": "integer",
+                      "title": "Trove conductor replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "taskmanager": {
+                      "type": "integer",
+                      "title": "Trove taskmanager replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "watcher": {
+          "type": "object",
+          "description": "Overrides for the watcher Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Watcher api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "decision_engine": {
+                      "type": "integer",
+                      "title": "Watcher decision_engine replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "applier": {
+                      "type": "integer",
+                      "title": "Watcher applier replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tacker": {
+          "type": "object",
+          "description": "Overrides for the tacker Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "conductor": {
+                      "type": "integer",
+                      "title": "Tacker conductor replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "server": {
+                      "type": "integer",
+                      "title": "Tacker server replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "cyborg": {
+          "type": "object",
+          "description": "Overrides for the cyborg Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Cyborg api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "conductor": {
+                      "type": "integer",
+                      "title": "Cyborg conductor replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "blazar": {
+          "type": "object",
+          "description": "Overrides for the blazar Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Blazar api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    },
+                    "manager": {
+                      "type": "integer",
+                      "title": "Blazar manager replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "zaqar": {
+          "type": "object",
+          "description": "Overrides for the zaqar Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Zaqar api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "freezer": {
+          "type": "object",
+          "description": "Overrides for the freezer Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Freezer api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "skyline": {
+          "type": "object",
+          "description": "Overrides for the skyline Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "skyline": {
+                      "type": "integer",
+                      "title": "Skyline skyline replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "gnocchi": {
+          "type": "object",
+          "description": "Overrides for the gnocchi Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "api": {
+                      "type": "integer",
+                      "title": "Gnocchi api replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "swift": {
+          "type": "object",
+          "description": "Overrides for the swift Composition (chart 0.2.0), deep-merged into its spec.",
+          "properties": {
+            "images": {
+              "type": "object",
+              "title": "Images",
+              "properties": {
+                "pull_policy": {
+                  "type": "string",
+                  "title": "Image pull policy",
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ],
+                  "default": "IfNotPresent"
+                }
+              }
+            },
+            "pod": {
+              "type": "object",
+              "title": "Pods",
+              "properties": {
+                "replicas": {
+                  "type": "object",
+                  "title": "Replicas",
+                  "properties": {
+                    "proxy": {
+                      "type": "integer",
+                      "title": "Swift proxy replicas",
+                      "minimum": 1,
+                      "maximum": 5,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
