@@ -35,7 +35,7 @@
     "chartVersion": {
       "type": "string",
       "title": "Component chart version",
-      "default": "0.1.1"
+      "default": "0.2.0"
     }
   }
 }

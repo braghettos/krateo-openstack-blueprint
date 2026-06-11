@@ -135,7 +135,7 @@ For anything in between, set **`spec.enabled`** to an explicit component list â€
 ask for plus what it needs and nothing else:
 
 ```yaml
-apiVersion: composition.krateo.io/v0-1-1
+apiVersion: composition.krateo.io/v0-2-0
 kind: Openstack
 metadata:
   name: openstack
