@@ -106,3 +106,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: trove
+    kind: Trove
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute
