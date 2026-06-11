@@ -147,3 +147,10 @@ components:
       - keystone
       - mariadb
     tier: compute
+  - name: freezer
+    kind: Freezer
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute
