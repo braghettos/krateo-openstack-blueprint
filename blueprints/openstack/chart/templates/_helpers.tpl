@@ -38,3 +38,30 @@
 {{- end -}}
 {{- $all -}}
 {{- end -}}
+
+{{/* The set of component names to deploy, space-joined. If `enabled` is non-empty it
+     is an explicit selection expanded to its transitive dependency closure (so
+     `enabled: [heat]` pulls in keystone, rabbitmq, mariadb, memcached). Otherwise it
+     falls back to the `profile`: identity tier always, plus compute when profile=full. */}}
+{{- define "osh.selected" -}}
+{{- $top := index . 0 -}}
+{{- $comps := $top.Values.components -}}
+{{- $enabled := $top.Values.enabled | default list -}}
+{{- $sel := dict -}}
+{{- if gt (len $enabled) 0 -}}
+  {{- range $e := $enabled -}}{{- $_ := set $sel $e true -}}{{- end -}}
+  {{/* expand deps; iterate past the max graph depth so the closure is complete */}}
+  {{- range $i := until 8 -}}
+    {{- range $c := $comps -}}
+      {{- if hasKey $sel $c.name -}}
+        {{- range $d := ($c.deps | default list) -}}{{- $_ := set $sel $d true -}}{{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- else -}}
+  {{- range $c := $comps -}}
+    {{- if or (eq $top.Values.profile "full") (eq $c.tier "identity") -}}{{- $_ := set $sel $c.name true -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- keys $sel | sortAlpha | join " " -}}
+{{- end -}}

@@ -11,6 +11,15 @@
       "enum": ["identity", "full"],
       "default": "identity"
     },
+    "enabled": {
+      "type": ["array", "null"],
+      "title": "Explicit component selection",
+      "description": "Deploy exactly these components plus their transitive dependencies, overriding profile. E.g. [\"heat\"] also brings up keystone, rabbitmq, mariadb and memcached. Empty uses profile.",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
     "installDefinitions": {
       "type": "boolean",
       "title": "Register component CompositionDefinitions",

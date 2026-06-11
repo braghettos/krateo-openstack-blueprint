@@ -1,7 +1,8 @@
-{{- /* Step 1: register each component's CompositionDefinition. */ -}}
+{{- /* Step 1: register each selected component's CompositionDefinition. */ -}}
+{{- $sel := splitList " " (include "osh.selected" (list $)) }}
 {{- if .Values.installDefinitions }}
 {{- range $c := .Values.components }}
-{{- if or (eq $.Values.profile "full") (eq $c.tier "identity") }}
+{{- if has $c.name $sel }}
 ---
 apiVersion: core.krateo.io/v1alpha1
 kind: CompositionDefinition
