@@ -188,3 +188,10 @@ metadata:
   name: zaqar
   namespace: openstack
 spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-1
+kind: Freezer
+metadata:
+  name: freezer
+  namespace: openstack
+spec: {}
