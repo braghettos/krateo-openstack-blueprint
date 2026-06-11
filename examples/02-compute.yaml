@@ -209,3 +209,10 @@ metadata:
   name: gnocchi
   namespace: openstack
 spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-1
+kind: Swift
+metadata:
+  name: swift
+  namespace: openstack
+spec: {}
