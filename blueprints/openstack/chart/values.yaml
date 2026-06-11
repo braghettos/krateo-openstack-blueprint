@@ -134,3 +134,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: blazar
+    kind: Blazar
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute

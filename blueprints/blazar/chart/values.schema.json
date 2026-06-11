@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "title": "OpenStack blazar",
+  "description": "Configuration for the OpenStack blazar service (OpenStack-Helm blazar, release 2025.1). Only the fields here are settable on a Composition; everything else uses the chart defaults in values.yaml. Deploy all the OpenStack component blueprints into one namespace to form a complete install.",
+  "properties": {
+    "images": {
+      "type": "object",
+      "title": "Images",
+      "properties": {
+        "pull_policy": {
+          "type": "string",
+          "title": "Image pull policy",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ],
+          "default": "IfNotPresent"
+        }
+      }
+    },
+    "pod": {
+      "type": "object",
+      "title": "Pods",
+      "properties": {
+        "replicas": {
+          "type": "object",
+          "title": "Replicas",
+          "properties": {
+            "api": {
+              "type": "integer",
+              "title": "Blazar api replicas",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            },
+            "manager": {
+              "type": "integer",
+              "title": "Blazar manager replicas",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

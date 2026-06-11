@@ -174,3 +174,10 @@ metadata:
   name: cyborg
   namespace: openstack
 spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-1
+kind: Blazar
+metadata:
+  name: blazar
+  namespace: openstack
+spec: {}
