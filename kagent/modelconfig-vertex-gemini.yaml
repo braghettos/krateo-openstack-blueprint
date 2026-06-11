@@ -1,0 +1,31 @@
+# GeminiVertexAI ModelConfig for the openstack-blueprint-expert agent.
+#
+# Authenticates with a Google Cloud service-account JSON key mounted by the
+# kagent controller at /creds/key.json (the kagent adk_api_translator wires
+# this automatically when spec.apiKeySecret is set).
+#
+# Prerequisites:
+#   1. Vertex AI API enabled on the GCP project.
+#   2. Service account with role roles/aiplatform.user (display name
+#      "Agent Platform User" in the current GCP UI).
+#   3. Secret kagent-vertex in this namespace with key "key.json"
+#      containing the SA JSON. Create with:
+#        kubectl -n kagent create secret generic kagent-vertex \
+#          --from-file=key.json=$HOME/Downloads/<your-sa-key>.json
+---
+apiVersion: kagent.dev/v1alpha2
+kind: ModelConfig
+metadata:
+  name: vertex-gemini
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: vertex-gemini
+    app.kubernetes.io/part-of: krateo-openstack-blueprint
+spec:
+  provider: GeminiVertexAI
+  model: gemini-2.5-pro
+  apiKeySecret: kagent-vertex
+  apiKeySecretKey: key.json
+  geminiVertexAI:
+    projectID: neon-481711
+    location: europe-west4
