@@ -72,3 +72,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: mistral
+    kind: Mistral
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute

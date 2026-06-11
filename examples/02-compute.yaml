@@ -111,3 +111,10 @@ metadata:
   name: manila
   namespace: openstack
 spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-1
+kind: Mistral
+metadata:
+  name: mistral
+  namespace: openstack
+spec: {}
