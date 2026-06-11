@@ -15,6 +15,16 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
+      - name: Umbrella componentValues schema is in sync with the component schemas
+        run: |
+          python3 -m pip install --quiet pyyaml
+          python3 hack/gen-componentvalues-schema.py
+          if ! git diff --quiet blueprints/openstack/chart/values.schema.json; then
+            echo "::error::umbrella values.schema.json is stale - run hack/gen-componentvalues-schema.py and commit the result"
+            git --no-pager diff blueprints/openstack/chart/values.schema.json | head -50
+            exit 1
+          fi
+
       - name: Lint, render, determinism + hook-free gate for every blueprint chart
         run: |
           fail=0
