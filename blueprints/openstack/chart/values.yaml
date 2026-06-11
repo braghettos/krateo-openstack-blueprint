@@ -141,3 +141,9 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: zaqar
+    kind: Zaqar
+    deps:
+      - keystone
+      - mariadb
+    tier: compute
