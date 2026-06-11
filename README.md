@@ -72,6 +72,7 @@ verified end-to-end (`mariadb`+`memcached` → `keystone` → `glance`+`horizon`
 | `cloudkitty`                 | `Cloudkitty`  | Rating/chargeback           | compute   |
 | `masakari`                   | `Masakari`    | Instances HA                | compute   |
 | `trove`                      | `Trove`       | Database as a service       | compute   |
+| `watcher`                    | `Watcher`     | Resource optimization       | compute   |
 | `openstack`                  | `Openstack`             | **Orchestrator** (sequences the above) | umbrella |
 
 Each blueprint is **self-contained**: `blueprints/<c>/chart/` vendors the OpenStack-Helm chart

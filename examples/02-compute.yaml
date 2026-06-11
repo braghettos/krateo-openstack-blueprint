@@ -153,3 +153,10 @@ metadata:
   name: trove
   namespace: openstack
 spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-1
+kind: Watcher
+metadata:
+  name: watcher
+  namespace: openstack
+spec: {}

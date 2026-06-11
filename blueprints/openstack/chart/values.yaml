@@ -113,3 +113,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: watcher
+    kind: Watcher
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute
