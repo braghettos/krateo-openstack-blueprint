@@ -1,0 +1,935 @@
+# Copyright 2019 Samsung Electronics Co., Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Default values for octavia.
+# This is a YAML-formatted file.
+# Declare name/value pairs to be passed into your templates.
+# name: value
+
+---
+release_group: null
+
+labels:
+  api:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  driver_agent:
+    node_selector_key: openstack-network-node
+    node_selector_value: enabled
+  worker:
+    node_selector_key: openstack-network-node
+    node_selector_value: enabled
+  housekeeping:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  health_manager:
+    node_selector_key: openstack-network-node
+    node_selector_value: enabled
+  job:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+
+images:
+  tags:
+    test: docker.io/xrally/xrally-openstack:2.0.0
+    bootstrap: quay.io/airshipit/openstack-client:2026.1-ubuntu_jammy
+    db_init: quay.io/airshipit/openstack-client:2026.1-ubuntu_jammy
+    octavia_db_sync: quay.io/airshipit/octavia:2026.1-ubuntu_jammy
+    db_drop: quay.io/airshipit/openstack-client:2026.1-ubuntu_jammy
+    rabbit_init: docker.io/rabbitmq:3.13-management
+    ks_user: quay.io/airshipit/openstack-client:2026.1-ubuntu_jammy
+    ks_service: quay.io/airshipit/openstack-client:2026.1-ubuntu_jammy
+    ks_endpoints: quay.io/airshipit/openstack-client:2026.1-ubuntu_jammy
+    dep_check: quay.io/airshipit/kubernetes-entrypoint:latest-ubuntu_noble
+    image_repo_sync: docker.io/docker:17.07.0
+    octavia_api: quay.io/airshipit/octavia:2026.1-ubuntu_jammy
+    octavia_driver_agent: quay.io/airshipit/octavia:2026.1-ubuntu_jammy
+    octavia_worker: quay.io/airshipit/octavia:2026.1-ubuntu_jammy
+    octavia_worker_init: quay.io/airshipit/openstack-client:2026.1-ubuntu_jammy
+    octavia_housekeeping: quay.io/airshipit/octavia:2026.1-ubuntu_jammy
+    octavia_health_manager: quay.io/airshipit/octavia:2026.1-ubuntu_jammy
+    octavia_health_manager_init: quay.io/airshipit/openstack-client:2026.1-ubuntu_jammy
+    openvswitch_vswitchd: quay.io/airshipit/openvswitch:latest-ubuntu_jammy
+  pull_policy: "IfNotPresent"
+  local_registry:
+    active: false
+    exclude:
+      - dep_check
+      - image_repo_sync
+
+bootstrap:
+  enabled: true
+  ks_user: admin
+  script: |
+    openstack role create --or-show load-balancer_admin
+    openstack role create --or-show load-balancer_observer
+    openstack role create --or-show load-balancer_global_observer
+    openstack role create --or-show load-balancer_quota_admin
+    openstack role create --or-show load-balancer_member
+
+network:
+  api:
+    ingress:
+      public: true
+      classes:
+        namespace: "ingress-openstack"
+        cluster: "ingress-cluster"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+        haproxy.org/path-rewrite: /
+    external_policy_local: false
+    node_port:
+      enabled: false
+      port: 30826
+
+dependencies:
+  dynamic:
+    common:
+      local_image_registry:
+        jobs:
+          - heat-image-repo-sync
+        services:
+          - endpoint: node
+            service: local_image_registry
+  static:
+    api:
+      jobs:
+        - octavia-db-sync
+        - octavia-ks-user
+        - octavia-ks-endpoints
+        - octavia-rabbit-init
+      services:
+        - endpoint: internal
+          service: oslo_db
+        - endpoint: internal
+          service: oslo_db_persistence
+        - endpoint: internal
+          service: identity
+        - endpoint: internal
+          service: oslo_messaging
+        - endpoint: internal
+          service: oslo_cache
+        - endpoint: internal
+          service: network
+    driver_agent:
+      jobs:
+        - octavia-db-sync
+        - octavia-ks-user
+        - octavia-ks-endpoints
+        - octavia-rabbit-init
+      services:
+        - endpoint: internal
+          service: oslo_db
+        - endpoint: internal
+          service: oslo_db_persistence
+        - endpoint: internal
+          service: identity
+        - endpoint: internal
+          service: oslo_messaging
+        - endpoint: internal
+          service: oslo_cache
+        - endpoint: internal
+          service: network
+        - endpoint: internal
+          service: load_balancer
+    worker:
+      jobs:
+        - octavia-db-sync
+        - octavia-ks-user
+        - octavia-ks-endpoints
+        - octavia-rabbit-init
+      services:
+        - endpoint: internal
+          service: oslo_db
+        - endpoint: internal
+          service: oslo_db_persistence
+        - endpoint: internal
+          service: identity
+        - endpoint: internal
+          service: oslo_messaging
+        - endpoint: internal
+          service: oslo_cache
+        - endpoint: internal
+          service: network
+        - endpoint: internal
+          service: load_balancer
+    housekeeping:
+      jobs:
+        - octavia-db-sync
+        - octavia-ks-user
+        - octavia-ks-endpoints
+        - octavia-rabbit-init
+      services:
+        - endpoint: internal
+          service: oslo_db
+        - endpoint: internal
+          service: oslo_db_persistence
+        - endpoint: internal
+          service: identity
+        - endpoint: internal
+          service: oslo_messaging
+        - endpoint: internal
+          service: oslo_cache
+        - endpoint: internal
+          service: network
+        - endpoint: internal
+          service: load_balancer
+    health_manager:
+      jobs:
+        - octavia-db-sync
+        - octavia-ks-user
+        - octavia-ks-endpoints
+        - octavia-rabbit-init
+      services:
+        - endpoint: internal
+          service: oslo_db
+        - endpoint: internal
+          service: oslo_db_persistence
+        - endpoint: internal
+          service: identity
+        - endpoint: internal
+          service: oslo_messaging
+        - endpoint: internal
+          service: oslo_cache
+        - endpoint: internal
+          service: network
+        - endpoint: internal
+          service: load_balancer
+    db_init:
+      services:
+        - endpoint: internal
+          service: oslo_db
+        - endpoint: internal
+          service: oslo_db_persistence
+    db_sync:
+      jobs:
+        - octavia-db-init
+      services:
+        - endpoint: internal
+          service: oslo_db
+        - endpoint: internal
+          service: oslo_db_persistence
+    ks_endpoints:
+      jobs:
+        - octavia-ks-service
+      services:
+        - endpoint: internal
+          service: identity
+    ks_service:
+      services:
+        - endpoint: internal
+          service: identity
+    ks_user:
+      services:
+        - endpoint: internal
+          service: identity
+    rabbit_init:
+      services:
+      - endpoint: internal
+        service: oslo_messaging
+    image_repo_sync:
+      services:
+        - endpoint: internal
+          service: local_image_registry
+
+conf:
+  octavia:
+    DEFAULT:
+      log_config_append: /etc/octavia/logging.conf
+    ovn:
+      ovn_nb_connection: unix:/var/run/ovn/ovnnb_db.sock
+      ovn_sb_connection: unix:/var/run/ovn/ovnsb_db.sock
+    api_settings:
+      api_handler: queue_producer
+      bind_host: 0.0.0.0
+      healthcheck_enabled: true
+    database:
+      max_retries: -1
+      # -- Database connection URI. When empty the URI is auto-generated
+      ## from endpoints.oslo_db. Set to null to disable auto-generation,
+      ## e.g. when using an operator such as mariadb-operator that supplies
+      ## the connection string via a mounted configuration snippet.
+      connection: ""
+    health_manager:
+      bind_port: 5555
+      bind_ip: 0.0.0.0
+      controller_ip_port_list: null
+      heartbeat_key: insecure
+    keystone_authtoken:
+      auth_type: password
+      auth_version: v3
+      memcache_security_strategy: ENCRYPT
+      service_type: load-balancer
+    certificates:
+      ca_private_key_passphrase: not-secure-passphrase
+      ca_private_key: /etc/octavia/certs/private/server_ca.key.pem
+      ca_certificate: /etc/octavia/certs/server_ca.cert.pem
+    haproxy_amphora:
+      server_ca: /etc/octavia/certs/server_ca-chain.cert.pem
+      client_cert: /etc/octavia/certs/private/client.cert-and-key.pem
+      base_path: /var/lib/octavia
+      base_cert_dir: /var/lib/octavia/certs
+    controller_worker:
+      amp_image_owner_id: null
+      amp_secgroup_list: null
+      amp_flavor_id: null
+      amp_boot_network_list: null
+      amp_ssh_key_name: octavia_ssh_key
+      amp_image_tag: amphora
+      network_driver: allowed_address_pairs_driver
+      compute_driver: compute_nova_driver
+      amphora_driver: amphora_haproxy_rest_driver
+      workers: 2
+      amp_active_retries: 100
+      amp_active_wait_sec: 2
+      loadbalancer_topology: SINGLE
+      client_ca: /etc/octavia/certs/client_ca.cert.pem
+    oslo_messaging:
+      topic: octavia_prov
+      rpc_thread_pool_size: 2
+    oslo_messaging_notifications:
+      driver: messagingv2
+    oslo_policy:
+      policy_file: /etc/octavia/policy.yaml
+    oslo_concurrency:
+      lock_path: /var/lock
+    house_keeping:
+      load_balancer_expiry_age: 3600
+      amphora_expiry_age: 3600
+    service_auth:
+      auth_type: password
+      cafile: ""
+      auth_version: v3
+      memcache_security_strategy: ENCRYPT
+    task_flow:
+      jobboard_enabled: true
+      # -- Taskflow persistence connection URI. When empty the URI is
+      ## auto-generated from endpoints.oslo_db_persistence. Set to null
+      ## to disable auto-generation.
+      persistence_connection: ""
+  policy: {}
+  logging:
+    loggers:
+      keys:
+        - root
+        - octavia
+    handlers:
+      keys:
+        - stdout
+        - stderr
+        - "null"
+    formatters:
+      keys:
+        - context
+        - default
+    logger_root:
+      level: INFO
+      handlers: stdout
+    logger_octavia:
+      level: INFO
+      handlers:
+        - stdout
+      qualname: octavia
+    logger_amqp:
+      level: WARNING
+      handlers: stderr
+      qualname: amqp
+    logger_amqplib:
+      level: WARNING
+      handlers: stderr
+      qualname: amqplib
+    logger_eventletwsgi:
+      level: WARNING
+      handlers: stderr
+      qualname: eventlet.wsgi.server
+    logger_sqlalchemy:
+      level: WARNING
+      handlers: stderr
+      qualname: sqlalchemy
+    logger_boto:
+      level: WARNING
+      handlers: stderr
+      qualname: boto
+    handler_null:
+      class: logging.NullHandler
+      formatter: default
+      args: ()
+    handler_stdout:
+      class: StreamHandler
+      args: (sys.stdout,)
+      formatter: context
+    handler_stderr:
+      class: StreamHandler
+      args: (sys.stderr,)
+      formatter: context
+    formatter_context:
+      class: oslo_log.formatters.ContextFormatter
+    formatter_default:
+      format: "%(message)s"
+  rabbitmq:
+    # NOTE(rk760n): adding rmq policy to mirror messages from notification queues and set expiration time for the ones
+    policies:
+      - vhost: "octavia"
+        name: "ha_ttl_octavia"
+        definition:
+          # mirror messges to other nodes in rmq cluster
+          ha-mode: "all"
+          ha-sync-mode: "automatic"
+          # 70s
+          message-ttl: 70000
+        priority: 0
+        apply-to: all
+        pattern: '(notifications)\.'
+  octavia_api_uwsgi:
+    uwsgi:
+      processes: 4
+      http-socket: "0.0.0.0:9876"
+      add-header: "Connection: close"
+      buffer-size: 65535
+      die-on-term: true
+      enable-threads: true
+      exit-on-reload: false
+      hook-master-start: unix_signal:15 gracefully_kill_them_all
+      lazy-apps: true
+      log-x-forwarded-for: true
+      master: true
+      procname-prefix-spaced: "octavia-api:"
+      route-user-agent: '^kube-probe.* donotlog:'
+      thunder-lock: true
+      worker-reload-mercy: 80
+      module: "octavia.wsgi.api:application"
+      stats: 0.0.0.0:1717
+      stats-http: true
+
+secrets:
+  identity:
+    admin: octavia-keystone-admin
+    octavia: octavia-keystone-user
+    test: octavia-keystone-test
+  oslo_db:
+    admin: octavia-db-admin
+    octavia: octavia-db-user
+  oslo_db_persistence:
+    admin: octavia-persistence-db-admin
+    octavia: octavia-persistence-db-user
+  oslo_messaging:
+    admin: octavia-rabbitmq-admin
+    octavia: octavia-rabbitmq-user
+  tls:
+    load_balancer:
+      api:
+        public: octavia-tls-public
+  oci_image_registry:
+    octavia: octavia-oci-image-registry
+
+identity:
+  openrc:
+    exclude_vars: []
+    extra_vars: []
+
+endpoints:
+  cluster_domain_suffix: cluster.local
+  local_image_registry:
+    name: docker-registry
+    namespace: docker-registry
+    hosts:
+      default: localhost
+      internal: docker-registry
+      node: localhost
+    host_fqdn_override:
+      default: null
+    port:
+      registry:
+        node: 5000
+  oci_image_registry:
+    name: oci-image-registry
+    namespace: oci-image-registry
+    auth:
+      enabled: false
+      octavia:
+        username: octavia
+        password: password
+    hosts:
+      default: localhost
+    host_fqdn_override:
+      default: null
+    port:
+      registry:
+        default: null
+  identity:
+    name: keystone
+    auth:
+      admin:
+        region_name: RegionOne
+        username: admin
+        password: password
+        project_name: admin
+        user_domain_name: default
+        project_domain_name: default
+      octavia:
+        role: admin
+        region_name: RegionOne
+        username: octavia
+        password: password
+        project_name: service
+        user_domain_name: service
+        project_domain_name: service
+      test:
+        role: admin
+        region_name: RegionOne
+        username: test
+        password: password
+        project_name: test
+        user_domain_name: service
+        project_domain_name: service
+    hosts:
+      default: keystone
+      internal: keystone-api
+    host_fqdn_override:
+      default: null
+    path:
+      default: /v3
+    scheme:
+      default: 'http'
+    port:
+      api:
+        default: 80
+        internal: 5000
+  load_balancer:
+    name: octavia
+    hosts:
+      default: octavia-api
+      public: octavia
+    host_fqdn_override:
+      default: null
+    path:
+      default: null
+      healthcheck: /healthcheck
+    scheme:
+      default: http
+    port:
+      api:
+        default: 9876
+        public: 80
+  oslo_db:
+    auth:
+      admin:
+        username: root
+        password: password
+      octavia:
+        username: octavia
+        password: password
+    hosts:
+      default: mariadb
+    host_fqdn_override:
+      default: null
+    path: /octavia
+    scheme: mysql+pymysql
+    port:
+      mysql:
+        default: 3306
+  oslo_db_persistence:
+    auth:
+      admin:
+        username: root
+        password: password
+      octavia:
+        username: octavia
+        password: password
+    hosts:
+      default: mariadb
+    host_fqdn_override:
+      default: null
+    path: /octavia_persistence
+    scheme: mysql+pymysql
+    port:
+      mysql:
+        default: 3306
+  oslo_cache:
+    auth:
+      # NOTE(portdirect): this is used to define the value for keystone
+      # authtoken cache encryption key, if not set it will be populated
+      # automatically with a random value, but to take advantage of
+      # this feature all services should be set to use the same key,
+      # and memcache service.
+      memcache_secret_key: octaviaXXmemcacheXXsecretXXkeyXX00000000000000000000000000000000
+    hosts:
+      default: memcached
+    host_fqdn_override:
+      default: null
+    port:
+      memcache:
+        default: 11211
+  oslo_messaging:
+    auth:
+      admin:
+        username: rabbitmq
+        password: password
+      octavia:
+        username: octavia
+        password: password
+    statefulset:
+      replicas: 1
+      name: rabbitmq-rabbitmq
+    hosts:
+      default: rabbitmq
+    host_fqdn_override:
+      default: null
+    path: /octavia
+    scheme: rabbit
+    port:
+      amqp:
+        default: 5672
+      http:
+        default: 15672
+  network:
+    name: neutron
+    hosts:
+      default: neutron-server
+      public: neutron
+    host_fqdn_override:
+      default: null
+    path:
+      default: null
+    scheme:
+      default: 'http'
+    port:
+      api:
+        default: 9696
+        public: 80
+  valkey:
+    name: valkey
+    hosts:
+      default: valkey
+    # NOTE(rlin): we should only provide password when not using CA cert.
+    password: null
+    host_fqdn_override:
+      default: null
+    port:
+      server:
+        default: 6379
+        sentinel: 26379
+
+pod:
+  probes:
+    api:
+      octavia-api:
+        liveness:
+          enabled: True
+          params: {}
+        readiness:
+          enabled: True
+          params: {}
+  security_context:
+    octavia_api:
+      pod: {}
+      container:
+        octavia_api:
+          capabilities:
+            add:
+              - SYS_NICE
+          runAsUser: 42424
+    octavia_driver_agent:
+      pod: {}
+      container:
+        octavia_driver_agent:
+          capabilities:
+            add:
+              - SYS_NICE
+          runAsUser: 42424
+    octavia_worker:
+      pod: {}
+      container:
+        octavia_worker_nic_init:
+          runAsUser: 0
+          capabilities:
+            add:
+              - NET_ADMIN
+              - NET_RAW
+              - NET_BIND_SERVICE
+        octavia_worker:
+          runAsUser: 0
+          capabilities:
+            add:
+              - NET_ADMIN
+    octavia_housekeeping:
+      pod: {}
+      container:
+        octavia_housekeeping:
+          runAsUser: 42424
+    octavia_health_manager:
+      pod: {}
+      container:
+        octavia_health_manager_nic_init:
+          runAsUser: 0
+          capabilities:
+            add:
+              - NET_ADMIN
+              - NET_RAW
+              - NET_BIND_SERVICE
+        octavia_health_manager:
+          runAsUser: 0
+          capabilities:
+            add:
+              - NET_ADMIN
+  affinity:
+    anti:
+      type:
+        default: preferredDuringSchedulingIgnoredDuringExecution
+      topologyKey:
+        default: kubernetes.io/hostname
+  mounts:
+    octavia_api:
+      init_container: null
+      octavia_api:
+        volumeMounts:
+        volumes:
+    octavia_driver_agent:
+      init_container: null
+      octavia_driver_agent:
+        volumeMounts:
+        volumes:
+    octavia_worker:
+      init_container: null
+      octavia_worker:
+        volumeMounts:
+        volumes:
+    octavia_housekeeping:
+      init_container: null
+      octavia_housekeeping:
+        volumeMounts:
+        volumes:
+    octavia_health_manager:
+      init_container: null
+      octavia_health_manager:
+        volumeMounts:
+        volumes:
+    octavia_bootstrap:
+      init_container: null
+      octavia_bootstrap:
+        volumeMounts:
+        volumes:
+    octavia_db_sync:
+      init_container: null
+      octavia_db_sync:
+        volumeMounts:
+        volumes:
+  # -- This allows users to add Kubernetes Projected Volumes to be mounted at /etc/octavia/octavia.conf.d/
+  ## This is a list of projected volume source objects for each deployment/statefulset/daemonset/cronjob
+  ## https://kubernetes.io/docs/concepts/storage/projected-volumes/
+  etcSources:
+    octavia_api: []
+    octavia_driver_agent: []
+    octavia_worker: []
+    octavia_housekeeping: []
+    octavia_health_manager: []
+    octavia_db_sync: []
+  replicas:
+    api: 1
+    driver_agent: 1
+    housekeeping: 1
+  lifecycle:
+    upgrades:
+      deployments:
+        revision_history: 3
+        pod_replacement_strategy: RollingUpdate
+        rolling_update:
+          max_unavailable: 1
+          max_surge: 3
+      daemonsets:
+        pod_replacement_strategy: RollingUpdate
+        health_manager:
+          enabled: true
+          min_ready_seconds: 0
+          max_unavailable: 1
+    disruption_budget:
+      api:
+        min_available: 0
+    termination_grace_period:
+      api:
+        timeout: 30
+  resources:
+    enabled: false
+    api:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    driver_agent:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    worker:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    housekeeping:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    health_manager:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    jobs:
+      bootstrap:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      rabbit_init:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_init:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_sync:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_drop:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      ks_endpoints:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      ks_service:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      ks_user:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      tests:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      image_repo_sync:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+
+network_policy:
+  octavia:
+    ingress:
+      - {}
+
+manifests:
+  configmap_bin: true
+  configmap_etc: true
+  daemonset_health_manager: true
+  daemonset_worker: true
+  deployment_api: true
+  deployment_driver_agent: true
+  deployment_housekeeping: true
+  ingress_api: false
+  job_bootstrap: true
+  job_db_init: true
+  job_db_sync: true
+  job_db_drop: false
+  job_image_repo_sync: false
+  job_rabbit_init: true
+  job_ks_endpoints: true
+  job_ks_service: true
+  job_ks_user: true
+  pdb_api: true
+  pod_rally_test: false
+  network_policy: false
+  secret_credential_keys: true
+  secret_db: true
+  secret_db_persistence: true
+  secret_ingress_tls: false
+  secret_keystone: true
+  secret_rabbitmq: true
+  secret_registry: true
+  service_ingress_api: false
+  service_api: true
+
+# -- Array of extra K8s manifests to deploy
+## Note: Supports use of custom Helm templates
+extraObjects: []
+  # - apiVersion: secrets-store.csi.x-k8s.io/v1
+  #   kind: SecretProviderClass
+  #   metadata:
+  #     name: osh-secrets-store
+  #   spec:
+  #     provider: aws
+  #     parameters:
+  #       objects: |
+  #         - objectName: "osh"
+  #           objectType: "secretsmanager"
+  #           jmesPath:
+  #               - path: "client_id"
+  #                 objectAlias: "client_id"
+  #               - path: "client_secret"
+  #                 objectAlias: "client_secret"
+  #     secretObjects:
+  #     - data:
+  #       - key: client_id
+  #         objectName: client_id
+  #       - key: client_secret
+  #         objectName: client_secret
+  #       secretName: osh-secrets-store
+  #       type: Opaque
+  #       labels:
+  #         app.kubernetes.io/part-of: osh
+...

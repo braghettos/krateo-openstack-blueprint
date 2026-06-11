@@ -1,0 +1,149 @@
+{{/*
+Copyright 2019 Samsung Electronics Co., Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/}}
+
+
+{{- define "octaviaApiLivenessProbeTemplate" }}
+httpGet:
+  scheme: {{ tuple "load_balancer" "service" "api" . | include "helm-toolkit.endpoints.keystone_endpoint_scheme_lookup" | upper }}
+  path: {{ tuple "load_balancer" "healthcheck" "internal" . | include "helm-toolkit.endpoints.keystone_endpoint_path_lookup" }}
+  port: {{ (splitList ":" (index (index .Values.conf.octavia_api_uwsgi "uwsgi") "http-socket") | last) }}
+{{- end }}
+
+{{- define "octaviaApiReadinessProbeTemplate" }}
+httpGet:
+  scheme: {{ tuple "load_balancer" "service" "api" . | include "helm-toolkit.endpoints.keystone_endpoint_scheme_lookup" | upper }}
+  path: {{ tuple "load_balancer" "healthcheck" "internal" . | include "helm-toolkit.endpoints.keystone_endpoint_path_lookup" }}
+  port: {{ (splitList ":" (index (index .Values.conf.octavia_api_uwsgi "uwsgi") "http-socket") | last) }}
+{{- end }}
+
+{{- if .Values.manifests.deployment_api }}
+{{- $envAll := . }}
+
+{{- $mounts_octavia_api := .Values.pod.mounts.octavia_api.octavia_api }}
+{{- $mounts_octavia_api_init := .Values.pod.mounts.octavia_api.init_container }}
+
+{{- $serviceAccountName := "octavia-api" }}
+{{ tuple $envAll "api" $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+
+{{- $etcSources := .Values.pod.etcSources.octavia_api }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: octavia-api
+  annotations:
+    {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" }}
+  labels:
+{{ tuple $envAll "octavia" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+spec:
+  replicas: {{ .Values.pod.replicas.api }}
+  selector:
+    matchLabels:
+{{ tuple $envAll "octavia" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
+{{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
+  template:
+    metadata:
+      labels:
+{{ tuple $envAll "octavia" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+      annotations:
+        configmap-bin-hash: {{ tuple "configmap-bin.yaml" . | include "helm-toolkit.utils.hash" }}
+        configmap-etc-hash: {{ tuple "configmap-etc.yaml" . | include "helm-toolkit.utils.hash" }}
+{{ tuple "octavia_api" . | include "helm-toolkit.snippets.custom_pod_annotations" | indent 8 }}
+    spec:
+{{ tuple "octavia_api" . | include "helm-toolkit.snippets.kubernetes_pod_priority_class" | indent 6 }}
+{{ tuple "octavia_api" . | include "helm-toolkit.snippets.kubernetes_pod_runtime_class" | indent 6 }}
+      serviceAccountName: {{ $serviceAccountName }}
+{{ dict "envAll" $envAll "application" "octavia_api" | include "helm-toolkit.snippets.kubernetes_pod_security_context" | indent 6 }}
+      affinity:
+{{ tuple $envAll "octavia" "api" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
+      nodeSelector:
+        {{ .Values.labels.api.node_selector_key }}: {{ .Values.labels.api.node_selector_value }}
+      terminationGracePeriodSeconds: {{ .Values.pod.lifecycle.termination_grace_period.api.timeout | default "30" }}
+      initContainers:
+{{ tuple $envAll "api" $mounts_octavia_api_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+      containers:
+        - name: octavia-api
+{{ tuple $envAll "octavia_api" | include "helm-toolkit.snippets.image" | indent 10 }}
+{{ tuple $envAll $envAll.Values.pod.resources.api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+{{ dict "envAll" $envAll "application" "octavia_api" "container" "octavia_api" | include "helm-toolkit.snippets.kubernetes_container_security_context" | indent 10 }}
+          command:
+            - /tmp/octavia-api.sh
+            - start
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /tmp/octavia-api.sh
+                  - stop
+          ports:
+            - name: o-api
+              containerPort: {{ (splitList ":" (index (index .Values.conf.octavia_api_uwsgi "uwsgi") "http-socket") | last) }}
+{{ dict "envAll" $envAll "component" "api" "container" "octavia-api" "type" "readiness" "probeTemplate" (include "octaviaApiReadinessProbeTemplate" $envAll | fromYaml) | include "helm-toolkit.snippets.kubernetes_probe" | indent 10 }}
+{{ dict "envAll" $envAll "component" "api" "container" "octavia-api" "type" "liveness" "probeTemplate" (include "octaviaApiLivenessProbeTemplate" $envAll | fromYaml) | include "helm-toolkit.snippets.kubernetes_probe" | indent 10 }}
+          volumeMounts:
+            - name: oslo-lock-path
+              mountPath: {{ .Values.conf.octavia.oslo_concurrency.lock_path }}
+            - name: pod-etc-octavia
+              mountPath: /etc/octavia
+            - name: octavia-bin
+              mountPath: /tmp/octavia-api.sh
+              subPath: octavia-api.sh
+              readOnly: true
+            - name: octavia-etc
+              mountPath: /etc/octavia/octavia.conf
+              subPath: octavia.conf
+              readOnly: true
+            - name: octavia-etc-snippets
+              mountPath: /etc/octavia/octavia.conf.d/
+              readOnly: true
+            - name: octavia-etc
+              mountPath: /etc/octavia/octavia-api-uwsgi.ini
+              subPath: octavia-api-uwsgi.ini
+              readOnly: true
+            - name: octavia-etc
+              mountPath: /etc/octavia/policy.yaml
+              subPath: policy.yaml
+              readOnly: true
+            {{- if .Values.conf.octavia.DEFAULT.log_config_append }}
+            - name: octavia-etc
+              mountPath: {{ .Values.conf.octavia.DEFAULT.log_config_append }}
+              subPath: {{ base .Values.conf.octavia.DEFAULT.log_config_append }}
+              readOnly: true
+            {{- end }}
+{{ if $mounts_octavia_api.volumeMounts }}{{ toYaml $mounts_octavia_api.volumeMounts | indent 12 }}{{ end }}
+      volumes:
+        - name: oslo-lock-path
+          emptyDir: {}
+        - name: pod-etc-octavia
+          emptyDir: {}
+        - name: octavia-bin
+          configMap:
+            name: octavia-bin
+            defaultMode: 0555
+        - name: octavia-etc
+          secret:
+            secretName: octavia-etc
+            defaultMode: 0444
+        - name: octavia-etc-snippets
+{{- if $etcSources }}
+          projected:
+            sources:
+{{ toYaml $etcSources | indent 14 }}
+{{- else }}
+          emptyDir: {}
+{{ end }}
+{{ if $mounts_octavia_api.volumes }}{{ toYaml $mounts_octavia_api.volumes | indent 8 }}{{ end }}
+{{- end }}

@@ -50,3 +50,11 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: octavia
+    kind: Octavia
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+      - neutron
+    tier: compute
