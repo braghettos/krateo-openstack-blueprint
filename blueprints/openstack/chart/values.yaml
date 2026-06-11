@@ -7,6 +7,11 @@ installDefinitions: true
 # profile: "identity" (mariadb,memcached,keystone,glance,horizon) or "full" (adds compute).
 profile: identity
 
+# enabled: explicit component selection (overrides profile). Each name is expanded to
+# its transitive dependency closure, so selecting just `heat` also pulls in keystone,
+# rabbitmq, mariadb and memcached. Leave empty (null) to use `profile`.
+enabled:
+
 # The component DAG. `deps` are component names whose Compositions must be Ready
 # before this one's Composition is emitted. `tier`: identity or compute. (CRD existence is matched by Kind, so no plural needed.)
 components:

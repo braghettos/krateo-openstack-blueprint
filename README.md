@@ -127,8 +127,23 @@ kubectl apply -f examples/openstack.yaml         # Kind: Openstack, spec.profile
 
 The orchestrator registers the component `CompositionDefinition`s itself and emits each component
 `Composition` in order as its dependencies become Ready. `profile: identity` brings up
-MariaDB+Memcached+Keystone+Glance+Horizon; `profile: full` also adds the compute plane (needs an
-amd64 cluster with the OVS kernel module — see [`quickstart-gke.md`](quickstart-gke.md)).
+MariaDB+Memcached+Keystone+Glance+Horizon; `profile: full` brings up the whole catalog (needs a
+large amd64 cluster — see [`quickstart-gke.md`](quickstart-gke.md)).
+
+For anything in between, set **`spec.enabled`** to an explicit component list — it overrides
+`profile` and is expanded to its **transitive dependency closure**, so you deploy exactly what you
+ask for plus what it needs and nothing else:
+
+```yaml
+apiVersion: composition.krateo.io/v0-1-1
+kind: Openstack
+metadata:
+  name: openstack
+  namespace: openstack
+spec:
+  enabled:
+    - heat            # -> heat + keystone + rabbitmq + mariadb + memcached
+```
 
 ### Or drive the per-component blueprints directly
 

@@ -2,8 +2,9 @@
        dependency Compositions report Ready=True (Helm lookup, re-evaluated each
        reconcile). On the first pass only zero-dependency components render; later
        passes unlock the rest in order. */ -}}
+{{- $sel := splitList " " (include "osh.selected" (list $)) }}
 {{- range $c := .Values.components }}
-{{- if or (eq $.Values.profile "full") (eq $c.tier "identity") }}
+{{- if has $c.name $sel }}
 {{- $crd := include "osh.crdExists" (list $c.kind) }}
 {{- $deps := include "osh.depsReady" (list $ $c.deps $.Values.components) }}
 {{- if and (eq $crd "true") (eq $deps "true") }}
