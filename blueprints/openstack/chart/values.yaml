@@ -65,3 +65,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: manila
+    kind: Manila
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute
