@@ -125,3 +125,10 @@ metadata:
   name: ceilometer
   namespace: openstack
 spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-1
+kind: Aodh
+metadata:
+  name: aodh
+  namespace: openstack
+spec: {}

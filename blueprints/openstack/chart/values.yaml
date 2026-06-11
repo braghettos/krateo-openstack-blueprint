@@ -85,3 +85,10 @@ components:
       - keystone
       - rabbitmq
     tier: compute
+  - name: aodh
+    kind: Aodh
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute
