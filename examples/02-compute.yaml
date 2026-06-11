@@ -97,3 +97,10 @@ metadata:
   name: octavia
   namespace: openstack
 spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-1
+kind: Manila
+metadata:
+  name: manila
+  namespace: openstack
+spec: {}
