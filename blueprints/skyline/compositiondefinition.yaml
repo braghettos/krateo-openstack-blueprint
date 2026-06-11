@@ -1,0 +1,9 @@
+apiVersion: core.krateo.io/v1alpha1
+kind: CompositionDefinition
+metadata:
+  name: skyline
+  namespace: openstack-system
+spec:
+  chart:
+    url: oci://ghcr.io/braghettos/charts/skyline
+    version: "0.1.1"

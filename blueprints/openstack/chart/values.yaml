@@ -154,3 +154,8 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: skyline
+    kind: Skyline
+    deps:
+      - keystone
+    tier: compute
