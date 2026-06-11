@@ -92,3 +92,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: cloudkitty
+    kind: Cloudkitty
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute
