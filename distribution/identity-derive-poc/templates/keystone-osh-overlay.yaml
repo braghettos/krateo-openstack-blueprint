@@ -1,0 +1,14 @@
+# Phase-2 bridge: the derived endpoints overlay for the REAL keystone chart, generated
+# from the same global input. Extract data["values.yaml"] and pass it to the vendored
+# chart with `helm template blueprints/keystone/chart -f <this>`. The vendored chart is
+# not modified - helm deep-merges these structural keys over its defaults.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keystone-osh-overlay
+  namespace: {{ .Release.Namespace }}
+  labels:
+    osh-derive/purpose: keystone-endpoints-overlay
+data:
+  values.yaml: |
+{{ include "osh-derive.keystone.overlay" (dict "global" .Values.global) | indent 4 }}

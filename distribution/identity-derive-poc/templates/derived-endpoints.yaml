@@ -1,0 +1,15 @@
+# Proof artifact: the full openstack-helm endpoints tree for keystone, GENERATED from
+# the small global input in values.yaml. In the real chart this block would be fed as
+# keystone's .Values.endpoints; here it is rendered into a ConfigMap so the derivation
+# is inspectable and diffable by the determinism gate.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keystone-derived-endpoints
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    osh-derive/source: global-input
+data:
+  endpoints.yaml: |
+{{ include "osh-derive.endpoints.all" (dict "global" .Values.global) | indent 4 }}
