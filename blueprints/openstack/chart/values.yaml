@@ -29,3 +29,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: heat
+    kind: Heat
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute

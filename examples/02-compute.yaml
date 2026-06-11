@@ -64,3 +64,12 @@ metadata:
   name: cinder
   namespace: openstack
 spec: {}
+---
+# Orchestration (stacks). Two services (orchestration + cloudformation). Its jobs
+# bootstrap a stack domain + heat_domain_admin in Keystone; no extra infra needed.
+apiVersion: composition.krateo.io/v0-1-1
+kind: Heat
+metadata:
+  name: heat
+  namespace: openstack
+spec: {}
