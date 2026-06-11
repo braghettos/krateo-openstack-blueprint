@@ -58,3 +58,10 @@ components:
       - mariadb
       - neutron
     tier: compute
+  - name: magnum
+    kind: Magnum
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute
