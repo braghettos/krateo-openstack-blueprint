@@ -1,0 +1,12 @@
+{{/*
+Licensed under the Apache License, Version 2.0 (the "License");
+*/}}
+
+{{- define "metadata.annotations.job.ks_user" }}
+{{- end }}
+
+{{- if .Values.manifests.job_ks_user }}
+{{- $ksUserJob := dict "envAll" . "serviceName" "swift" -}}
+{{- $_ := set $ksUserJob "jobAnnotations" (include "metadata.annotations.job.ks_user" . | fromYaml) }}
+{{ $ksUserJob | include "helm-toolkit.manifests.job_ks_user" }}
+{{- end }}

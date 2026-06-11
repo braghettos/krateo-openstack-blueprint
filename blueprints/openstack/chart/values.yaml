@@ -165,3 +165,8 @@ components:
       - keystone
       - mariadb
     tier: compute
+  - name: swift
+    kind: Swift
+    deps:
+      - keystone
+    tier: compute
