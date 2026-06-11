@@ -184,6 +184,9 @@ kubectl -n openstack run osclient --rm -it --restart=Never \
 
 ## Quickstarts
 
+- [`docs/quickstart.md`](docs/quickstart.md) — the happy path: deploy the umbrella `Openstack`
+  Composition, reconfigure a component via `spec.componentValues`, then (optionally) install the
+  [`openstack-blueprint-expert`](kagent) kagent SME.
 - [`quickstart-kind.md`](quickstart-kind.md) — identity plane on a local kind cluster (Apple
   Silicon supported via amd64 image pre-loading).
 - [`quickstart-gke.md`](quickstart-gke.md) — disposable GKE cluster with the compute plane
