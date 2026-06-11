@@ -181,3 +181,10 @@ metadata:
   name: blazar
   namespace: openstack
 spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-1
+kind: Zaqar
+metadata:
+  name: zaqar
+  namespace: openstack
+spec: {}
