@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "title": "OpenStack ironic",
+  "description": "Configuration for the Ironic bare-metal provisioning service (OpenStack-Helm ironic, release 2025.1). Only the fields here are settable on a Composition; everything else uses the chart defaults in values.yaml. Deploy all the OpenStack component blueprints into one namespace to form a complete install. Production-grade real-driver deploy (ipmi/redfish, iPXE/PXE, conductor on hostNetwork). The driver stack (conf.ironic.*) is fixed in values.yaml to avoid the crdgen Kind-vs-'ironic' property collision; the conductor needs a node with the provisioning NIC labelled openstack-control-plane=enabled.",
+  "properties": {
+    "images": {
+      "type": "object",
+      "title": "Images",
+      "properties": {
+        "pull_policy": {
+          "type": "string",
+          "title": "Image pull policy",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ],
+          "default": "IfNotPresent"
+        }
+      }
+    },
+    "pod": {
+      "type": "object",
+      "title": "Pod",
+      "properties": {
+        "replicas": {
+          "type": "object",
+          "title": "Replica counts",
+          "properties": {
+            "api": {
+              "type": "integer",
+              "title": "ironic-api replicas",
+              "minimum": 1,
+              "default": 1
+            },
+            "conductor": {
+              "type": "integer",
+              "title": "ironic-conductor replicas",
+              "minimum": 1,
+              "default": 1
+            }
+          }
+        }
+      }
+    },
+    "labels": {
+      "type": "object",
+      "title": "Scheduling labels",
+      "properties": {
+        "conductor": {
+          "type": "object",
+          "title": "Conductor node selector",
+          "description": "The conductor uses hostNetwork for PXE/TFTP/HTTP-boot and must land on a node attached to the provisioning network.",
+          "properties": {
+            "node_selector_key": {
+              "type": "string",
+              "default": "openstack-control-plane"
+            },
+            "node_selector_value": {
+              "type": "string",
+              "default": "enabled"
+            }
+          }
+        }
+      }
+    },
+    "network": {
+      "type": "object",
+      "title": "Provisioning network",
+      "properties": {
+        "pxe": {
+          "type": "object",
+          "title": "PXE / provisioning",
+          "properties": {
+            "device": {
+              "type": "string",
+              "title": "Provisioning NIC",
+              "description": "Host interface name inside the conductor pod used for PXE/TFTP (PROVISIONER_INTERFACE).",
+              "default": "ironic-pxe"
+            },
+            "neutron_provider_network": {
+              "type": "string",
+              "title": "Provider network type/name",
+              "default": "ironic"
+            },
+            "neutron_subnet_cidr": {
+              "type": "string",
+              "title": "Provisioning subnet CIDR",
+              "default": "172.24.6.0/24"
+            },
+            "neutron_subnet_gateway": {
+              "type": "string",
+              "title": "Provisioning subnet gateway",
+              "default": "172.24.6.1/24"
+            },
+            "neutron_subnet_alloc_start": {
+              "type": "string",
+              "title": "DHCP allocation start",
+              "default": "172.24.6.100"
+            },
+            "neutron_subnet_alloc_end": {
+              "type": "string",
+              "title": "DHCP allocation end",
+              "default": "172.24.6.200"
+            }
+          }
+        }
+      }
+    }
+  }
+}

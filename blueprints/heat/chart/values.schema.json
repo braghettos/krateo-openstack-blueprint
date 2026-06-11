@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "title": "OpenStack heat",
+  "description": "Configuration for the Heat orchestration service (OpenStack-Helm heat, release 2025.1). Only the fields here are settable on a Composition; everything else uses the chart defaults in values.yaml. Deploy all the OpenStack component blueprints into one namespace to form a complete install. Heat exposes two services (orchestration + cloudformation) and bootstraps a stack domain + heat_domain_admin via its jobs.",
+  "properties": {
+    "images": {
+      "type": "object",
+      "title": "Images",
+      "properties": {
+        "pull_policy": {
+          "type": "string",
+          "title": "Image pull policy",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ],
+          "default": "IfNotPresent"
+        }
+      }
+    },
+    "pod": {
+      "type": "object",
+      "title": "Pods",
+      "properties": {
+        "replicas": {
+          "type": "object",
+          "title": "Replicas",
+          "properties": {
+            "api": {
+              "type": "integer",
+              "title": "Heat API (orchestration) replicas",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            },
+            "cfn": {
+              "type": "integer",
+              "title": "Heat CFN API (cloudformation) replicas",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            },
+            "engine": {
+              "type": "integer",
+              "title": "Heat engine replicas",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

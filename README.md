@@ -58,6 +58,9 @@ verified end-to-end (`mariadb`+`memcached` → `keystone` → `glance`+`horizon`
 | `libvirt`                    | `Libvirt`      | libvirt/QEMU hypervisor     | compute   |
 | `nova`                       | `Nova`         | Compute (VMs, QEMU)         | compute   |
 | `neutron`                    | `Neutron`      | Networking (ML2/OVS, VXLAN) | compute   |
+| `ironic`                     | `Ironic`       | Bare-metal provisioning (ipmi/redfish, iPXE) | compute   |
+| `cinder`                     | `Cinder`       | Block storage (volumes)     | compute   |
+| `heat`                       | `Heat`         | Orchestration (stacks)      | compute   |
 | `barbican`                   | `Barbican`     | Key manager (secrets)       | compute   |
 | `openstack`                  | `Openstack`             | **Orchestrator** (sequences the above) | umbrella |
 
@@ -80,6 +83,14 @@ curated `values.schema.json` drives each Composition CRD.
   required for the Krateo CDC path — see [`docs/medium-openstack-as-a-service.md`](docs/medium-openstack-as-a-service.md).
   Compute is **not** possible on kind/Apple-Silicon (no `/dev/kvm`, arm64-only) — use GKE, see
   [`quickstart-gke.md`](quickstart-gke.md).
+- **Bare-metal plane (`ironic`) — production-grade blueprint, composition-driven**: real driver stack
+  (`ipmi`/`redfish`, iPXE/PXE/TFTP/HTTP boot), conductor on `hostNetwork`, provisioning-network wiring,
+  with the same hook-strip + determinism fixes as the rest. On a cloud-only cluster (GKE) the API and
+  Keystone `baremetal` catalog registration come up; **actually provisioning a node requires real
+  hardware** — a node on the provisioning L2 with the PXE NIC (default `ironic-pxe`) labelled
+  `openstack-control-plane=enabled`, plus BMCs. Pairs with the
+  [`openstack-ironic-operator-kog`](https://github.com/braghettos/openstack-ironic-operator-kog) KOG
+  operator, which drives the Ironic API to enrol/provision nodes as Kubernetes CRs.
 
 ## Install
 
