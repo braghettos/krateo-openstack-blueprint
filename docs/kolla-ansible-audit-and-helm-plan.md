@@ -285,3 +285,9 @@ Result — the derivation produced a **working** Keystone, not just a valid rend
 This closes the live-validation gate for Phases 1-3: the kolla-style "few inputs -> full config"
 engine deploys a functioning OpenStack identity service. Phases 5-9 (stateful bootstrap HA, lifecycle
 DAG, TLS, ironic boot-infra) remain for real multi-node infrastructure.
+
+**Confirmed on real GKE (native amd64, no emulation):** the same identity tier deployed from the
+global-derived overlay on a single-node GKE cluster reached the same result — `keystone-api` 1/1,
+bootstrap + db-sync Completed against the derived `mariadb.openstack:3306`, `openstack token issue`
+returns a Fernet token, `user list` shows `admin`, and keystone is registered at the derived internal
+endpoint. kind (emulated) and GKE (native) agree. Cluster torn down after validation.
