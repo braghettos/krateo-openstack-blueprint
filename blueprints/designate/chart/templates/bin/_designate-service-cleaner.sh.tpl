@@ -1,0 +1,10 @@
+#!/bin/bash
+# Copyright (c) 2025 VEXXHOST, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+set -ex
+
+designate-manage \
+  --config-file /etc/designate/designate.conf \
+  --config-dir /etc/designate/designate.conf.d \
+  service clean

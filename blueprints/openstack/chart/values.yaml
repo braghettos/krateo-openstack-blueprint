@@ -43,3 +43,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: designate
+    kind: Designate
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute

@@ -83,3 +83,10 @@ metadata:
   name: barbican
   namespace: openstack
 spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-1
+kind: Designate
+metadata:
+  name: designate
+  namespace: openstack
+spec: {}
