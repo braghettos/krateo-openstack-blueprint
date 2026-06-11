@@ -64,6 +64,7 @@ verified end-to-end (`mariadb`+`memcached` → `keystone` → `glance`+`horizon`
 | `barbican`                   | `Barbican`     | Key manager (secrets)       | compute   |
 | `designate`                  | `Designate`   | DNS service (zones/records) | compute   |
 | `octavia`                    | `Octavia`     | Load balancing (LBaaS)      | compute   |
+| `mistral`                    | `Mistral`     | Workflow service            | compute   |
 | `openstack`                  | `Openstack`             | **Orchestrator** (sequences the above) | umbrella |
 
 Each blueprint is **self-contained**: `blueprints/<c>/chart/` vendors the OpenStack-Helm chart
