@@ -79,3 +79,9 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: ceilometer
+    kind: Ceilometer
+    deps:
+      - keystone
+      - rabbitmq
+    tier: compute
