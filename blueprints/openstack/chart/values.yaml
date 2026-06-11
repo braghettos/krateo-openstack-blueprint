@@ -127,3 +127,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: cyborg
+    kind: Cyborg
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute
