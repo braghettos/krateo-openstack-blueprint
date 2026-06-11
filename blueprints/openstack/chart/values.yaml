@@ -159,3 +159,9 @@ components:
     deps:
       - keystone
     tier: compute
+  - name: gnocchi
+    kind: Gnocchi
+    deps:
+      - keystone
+      - mariadb
+    tier: compute

@@ -202,3 +202,10 @@ metadata:
   name: skyline
   namespace: openstack
 spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-1
+kind: Gnocchi
+metadata:
+  name: gnocchi
+  namespace: openstack
+spec: {}
