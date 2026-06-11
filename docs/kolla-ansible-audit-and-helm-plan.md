@@ -291,3 +291,38 @@ global-derived overlay on a single-node GKE cluster reached the same result — 
 bootstrap + db-sync Completed against the derived `mariadb.openstack:3306`, `openstack token issue`
 returns a Fernet token, `user list` shows `admin`, and keystone is registered at the derived internal
 endpoint. kind (emulated) and GKE (native) agree. Cluster torn down after validation.
+
+---
+
+## Appendix C — verification of the Phase 5-9 "gaps" against the vendored charts
+
+Before building any Phase 5-9 item, each was verified against the vendored openstack-helm charts
+(on `feat/ironic-blueprint`, which carries the ironic chart). **Most are already implemented** — the
+kolla-centric audit over-stated them by mapping from kolla rather than crediting OSH's cloud-native
+equivalents. (This is exactly the "contract audit, not line-diff" caveat in section 1.)
+
+- **Ironic boot-infra (Phase 9) — already present, NOT a gap.** The conductor StatefulSet pod runs
+  `ironic-conductor` + `ironic-conductor-pxe` (TFTP) + `ironic-conductor-http` (HTTP) — the
+  byte-identical container set to upstream `openstack-helm/ironic/templates/statefulset-conductor.yaml`.
+  OSH delegates provisioning DHCP to **Neutron** (no standalone dnsmasq — the dnsmasq/pxe-filter the
+  audit listed is *kolla's* model). The only templates absent vs upstream are `novncproxy` + console
+  RBAC, a nova serial-console concern unrelated to ironic boot.
+- **TLS via cert-manager (Phase 8) — already present, disabled.** 8 charts ship `certificates.yaml`
+  → `helm-toolkit.manifests.certificates`, which emits **cert-manager.io Certificate** CRs; ingress/cert
+  paths reference `endpoints.<svc>.host_fqdn_override.default.tls.issuerRef`. Defaults are
+  `manifests.certificates: false` + scheme `http`. Work = configure an Issuer + enable + validate,
+  **not build**.
+- **Stateful-datastore bootstrap (Phase 5) — already present.** mariadb Galera StatefulSet +
+  cluster-wait, rabbitmq quorum StatefulSet + erlang-cookie, keystone fernet/credential setup+rotate
+  CronJobs, nova cell-setup Job — all vendored and proven working (the identity-tier smoke test).
+- **Lifecycle DAG (Phase 6) — present for the 12 components.** The umbrella two-pass engine orders
+  them. The genuinely-missing piece is **new service charts** (cinder, heat, barbican, designate, …)
+  to grow the catalog toward kolla's ~30.
+
+**Revised conclusion.** The vendored OSH charts + curated-schema umbrella already deliver most of
+Phases 4-9: few-inputs via curated `values.schema.json`, cert-manager TLS, in-pod ironic boot-infra,
+StatefulSet HA bootstrap. The genuine remaining work is **(a) growing the service catalog** (vendor
+new charts + DAG entries) and **(b) enabling + validating** the present-but-disabled capabilities
+(TLS, HA, multi-node) against real infrastructure — not re-building them. The `osh-derive` engine
+(Phases 1-3) stands as the proven derivation mechanism + the determinism/MultiStrOpts findings, but is
+not required to productionize the umbrella, which already achieves few-inputs via curated schemas.
