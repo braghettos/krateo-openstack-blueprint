@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "title": "OpenStack cinder",
+  "description": "Configuration for the Cinder block-storage service (OpenStack-Helm cinder, release 2025.1). Only the fields here are settable on a Composition; everything else uses the chart defaults in values.yaml. Deploy all the OpenStack component blueprints into one namespace to form a complete install. A volume backend (LVM/Ceph/NFS) and, for backups, an object store are configured via the chart defaults and require real storage infrastructure.",
+  "properties": {
+    "images": {
+      "type": "object",
+      "title": "Images",
+      "properties": {
+        "pull_policy": {
+          "type": "string",
+          "title": "Image pull policy",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ],
+          "default": "IfNotPresent"
+        }
+      }
+    },
+    "pod": {
+      "type": "object",
+      "title": "Pods",
+      "properties": {
+        "replicas": {
+          "type": "object",
+          "title": "Replicas",
+          "properties": {
+            "api": {
+              "type": "integer",
+              "title": "Cinder API replicas",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            },
+            "scheduler": {
+              "type": "integer",
+              "title": "Cinder scheduler replicas",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            },
+            "volume": {
+              "type": "integer",
+              "title": "Cinder volume replicas",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}
