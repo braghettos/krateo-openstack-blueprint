@@ -28,7 +28,6 @@ metadata:
   labels:
 {{ tuple $envAll "horizon" "test" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
   annotations:
-    "helm.sh/hook": test-success
     {{ tuple $envAll | include "helm-toolkit.snippets.release_uuid" }}
 {{ dict "envAll" $envAll "podName" "horizon-test" "containerNames" (list "init" "horizon-test") | include "helm-toolkit.snippets.kubernetes_mandatory_access_control_annotation" | indent 4 }}
 spec:

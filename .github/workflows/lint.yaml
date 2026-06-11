@@ -15,11 +15,31 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
-      - name: Lint and render every blueprint chart
+      - name: Lint, render, determinism + hook-free gate for every blueprint chart
         run: |
+          fail=0
           for d in blueprints/*/chart; do
             echo "== $d =="
             sed -i "s/CHART_VERSION/0.0.0-ci/g" "$d/Chart.yaml"
             helm lint "$d"
-            helm template release "$d" --namespace openstack > /dev/null
+            # render twice and compare - any randAlphaNum/uuidv4/now reaching a manifest
+            # makes the two renders differ (the reconcile-churn class of bug, e.g. gnocchi
+            # statsd UUIDs, memcache_secret_key). Must be byte-identical.
+            helm template release "$d" --namespace openstack > /tmp/r1.yaml
+            helm template release "$d" --namespace openstack > /tmp/r2.yaml
+            if ! diff -q /tmp/r1.yaml /tmp/r2.yaml > /dev/null; then
+              echo "::error file=$d::NON-DETERMINISTIC - two renders differ (reconcile churn)"
+              diff /tmp/r1.yaml /tmp/r2.yaml | head -30
+              fail=1
+            fi
+            # Helm hooks must be stripped - the Krateo composition-dynamic-controller SA
+            # cannot get/delete hook Jobs, so hooked charts never converge.
+            if grep -q 'helm.sh/hook' /tmp/r1.yaml; then
+              echo "::error file=$d::emits Helm hooks (must be stripped for the CDC ServiceAccount)"
+              grep -n 'helm.sh/hook' /tmp/r1.yaml | head
+              fail=1
+            fi
           done
+          # the umbrella orchestrator must render under the full profile
+          helm template osh blueprints/openstack/chart --namespace openstack --set profile=full > /dev/null
+          exit $fail
