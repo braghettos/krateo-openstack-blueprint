@@ -139,3 +139,10 @@ metadata:
   name: cloudkitty
   namespace: openstack
 spec: {}
+---
+apiVersion: composition.krateo.io/v0-1-1
+kind: Masakari
+metadata:
+  name: masakari
+  namespace: openstack
+spec: {}

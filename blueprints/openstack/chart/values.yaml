@@ -99,3 +99,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: masakari
+    kind: Masakari
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute
