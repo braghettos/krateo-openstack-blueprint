@@ -21,3 +21,10 @@ components:
   - {name: libvirt,     kind: Libvirt,     deps: [openvswitch],                               tier: compute}
   - {name: neutron,     kind: Neutron,     deps: [keystone, rabbitmq, openvswitch],           tier: compute}
   - {name: nova,        kind: Nova,        deps: [keystone, placement, rabbitmq, glance, neutron, libvirt], tier: compute}
+  - name: cinder
+    kind: Cinder
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute

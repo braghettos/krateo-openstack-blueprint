@@ -43,3 +43,13 @@ metadata:
   name: nova
   namespace: openstack
 spec: {}
+---
+# Block storage. Requires a volume backend (LVM/Ceph/NFS) on the nodes; the API +
+# scheduler + Keystone registration come up without one, but volume create needs
+# real storage. Backup (object store) is disabled by default.
+apiVersion: composition.krateo.io/v0-1-1
+kind: Cinder
+metadata:
+  name: cinder
+  namespace: openstack
+spec: {}
