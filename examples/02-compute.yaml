@@ -44,6 +44,17 @@ metadata:
   namespace: openstack
 spec: {}
 ---
+# Bare-metal provisioning. Production-grade (ipmi/redfish, iPXE/TFTP/HTTP, conductor on
+# hostNetwork). The conductor needs a node on the provisioning network with the PXE NIC
+# (default ironic-pxe) labelled openstack-control-plane=enabled; without real hardware the
+# api + Keystone registration come up but the conductor/provisioning path needs real infra.
+apiVersion: composition.krateo.io/v0-1-1
+kind: Ironic
+metadata:
+  name: ironic
+  namespace: openstack
+spec: {}
+---
 # Block storage. Requires a volume backend (LVM/Ceph/NFS) on the nodes; the API +
 # scheduler + Keystone registration come up without one, but volume create needs
 # real storage. Backup (object store) is disabled by default.
