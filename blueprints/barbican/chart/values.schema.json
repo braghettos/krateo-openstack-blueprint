@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "title": "OpenStack barbican",
+  "description": "Configuration for the Barbican key-manager service (OpenStack-Helm barbican, release 2025.1). Only the fields here are settable on a Composition; everything else uses the chart defaults in values.yaml. Deploy all the OpenStack component blueprints into one namespace to form a complete install. The simple_crypto KEK defaults to a well-known value in the chart - override conf.barbican.simple_crypto_plugin.kek with a real 32-byte base64 key for production (the KEK must never change after secrets are stored, or they become undecryptable).",
+  "properties": {
+    "images": {
+      "type": "object",
+      "title": "Images",
+      "properties": {
+        "pull_policy": {
+          "type": "string",
+          "title": "Image pull policy",
+          "enum": ["Always", "IfNotPresent", "Never"],
+          "default": "IfNotPresent"
+        }
+      }
+    },
+    "pod": {
+      "type": "object",
+      "title": "Pods",
+      "properties": {
+        "replicas": {
+          "type": "object",
+          "title": "Replicas",
+          "properties": {
+            "api": {
+              "type": "integer",
+              "title": "Barbican API replicas",
+              "minimum": 1,
+              "maximum": 5,
+              "default": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

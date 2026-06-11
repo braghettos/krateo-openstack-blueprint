@@ -36,3 +36,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: barbican
+    kind: Barbican
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute
