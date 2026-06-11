@@ -6,14 +6,20 @@
 {{- printf "composition.krateo.io/v%s" ($top.Values.chartVersion | toString | replace "." "-") -}}
 {{- end -}}
 
-{{/* Returns "true" if a Composition of <kind>/<name> reports Ready=True. */}}
+{{/* Returns "true" if a Composition of <kind>/<name> reports Ready=True. Guarded by
+     osh.crdExists: a `lookup` of an unregistered group/version *errors* (not nil), which
+     would fail the whole render on first install (before the component CRDs exist). The
+     guard makes the umbrella self-bootstrapping - on early reconciles deps simply read as
+     not-ready until their CRDs appear. */}}
 {{- define "osh.ready" -}}
 {{- $top := index . 0 -}}{{- $kind := index . 1 -}}{{- $name := index . 2 -}}
-{{- $o := lookup (include "osh.apiVersion" (list $top)) $kind $top.Release.Namespace $name -}}
 {{- $r := "" -}}
+{{- if eq (include "osh.crdExists" (list $kind)) "true" -}}
+{{- $o := lookup (include "osh.apiVersion" (list $top)) $kind $top.Release.Namespace $name -}}
 {{- if $o -}}{{- range ($o.status.conditions | default list) -}}
 {{- if and (eq .type "Ready") (eq (.status | toString) "True") -}}{{- $r = "true" -}}{{- end -}}
 {{- end -}}{{- end -}}
+{{- end -}}
 {{- $r -}}
 {{- end -}}
 
