@@ -120,3 +120,10 @@ components:
       - rabbitmq
       - mariadb
     tier: compute
+  - name: tacker
+    kind: Tacker
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute
