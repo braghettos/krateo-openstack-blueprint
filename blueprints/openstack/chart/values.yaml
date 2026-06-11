@@ -22,3 +22,10 @@ components:
   - {name: neutron,     kind: Neutron,     deps: [keystone, rabbitmq, openvswitch],           tier: compute}
   - {name: nova,        kind: Nova,        deps: [keystone, placement, rabbitmq, glance, neutron, libvirt], tier: compute}
   - {name: ironic,      kind: Ironic,      deps: [keystone, mariadb, rabbitmq, glance, neutron], tier: compute}
+  - name: cinder
+    kind: Cinder
+    deps:
+      - keystone
+      - rabbitmq
+      - mariadb
+    tier: compute

@@ -59,6 +59,7 @@ verified end-to-end (`mariadb`+`memcached` → `keystone` → `glance`+`horizon`
 | `nova`                       | `Nova`         | Compute (VMs, QEMU)         | compute   |
 | `neutron`                    | `Neutron`      | Networking (ML2/OVS, VXLAN) | compute   |
 | `ironic`                     | `Ironic`       | Bare-metal provisioning (ipmi/redfish, iPXE) | compute   |
+| `cinder`                     | `Cinder`       | Block storage (volumes)     | compute   |
 | `openstack`                  | `Openstack`             | **Orchestrator** (sequences the above) | umbrella |
 
 Each blueprint is **self-contained**: `blueprints/<c>/chart/` vendors the OpenStack-Helm chart
