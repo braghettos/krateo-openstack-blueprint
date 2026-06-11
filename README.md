@@ -67,6 +67,7 @@ verified end-to-end (`mariadb`+`memcached` → `keystone` → `glance`+`horizon`
 | `magnum`                     | `Magnum`      | Container infra (k8s)       | compute   |
 | `manila`                     | `Manila`      | Shared filesystems          | compute   |
 | `mistral`                    | `Mistral`     | Workflow service            | compute   |
+| `ceilometer`                 | `Ceilometer`  | Telemetry collection        | compute   |
 | `openstack`                  | `Openstack`             | **Orchestrator** (sequences the above) | umbrella |
 
 Each blueprint is **self-contained**: `blueprints/<c>/chart/` vendors the OpenStack-Helm chart
