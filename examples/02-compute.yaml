@@ -43,3 +43,13 @@ metadata:
   name: nova
   namespace: openstack
 spec: {}
+---
+# Key manager (secrets/certificates store). The simple_crypto KEK defaults to a
+# well-known value - override conf.barbican.simple_crypto_plugin.kek for production
+# (it must never change once secrets are stored, or they become undecryptable).
+apiVersion: composition.krateo.io/v0-1-1
+kind: Barbican
+metadata:
+  name: barbican
+  namespace: openstack
+spec: {}
