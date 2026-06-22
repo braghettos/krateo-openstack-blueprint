@@ -29,7 +29,7 @@ keywords:
 maintainers:
   - name: OpenStack-Helm Authors
 annotations:
-  krateo.io/category: compute
+  krateo.io/category: network
   krateo.io/maturity: stable
   krateoSupportedVersion: ">= 2.5.1"
 dependencies:
