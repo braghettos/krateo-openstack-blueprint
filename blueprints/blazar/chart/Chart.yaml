@@ -18,7 +18,7 @@ name: blazar
 type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/blazar/
-icon: https://openmetal.io/wp-content/uploads/2024/10/OpenStack_Project_Blazar-300x300.jpg
+icon: https://raw.githubusercontent.com/krateoplatformops/krateo/main/docs/media/logo.svg
 sources:
   - https://opendev.org/openstack/blazar
 keywords:
@@ -28,6 +28,10 @@ keywords:
 maintainers:
   - name: OpenStack Helm Team
     email: openstack-helm@lists.openstack.org
+annotations:
+  krateo.io/category: compute
+  krateo.io/maturity: beta
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

@@ -14,7 +14,11 @@ type: application
 version: CHART_VERSION
 appVersion: "2025.1"
 home: https://krateo.io
-icon: "https://github.com/krateoplatformops/krateo/blob/main/docs/media/logo.svg"
+icon: https://raw.githubusercontent.com/krateoplatformops/krateo/main/docs/media/logo.svg
 keywords: [openstack, orchestrator, umbrella]
 sources:
   - https://github.com/braghettos/krateo-openstack-blueprint
+annotations:
+  krateo.io/category: application
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"

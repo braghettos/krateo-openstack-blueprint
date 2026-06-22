@@ -17,15 +17,24 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Octavia
 name: octavia
+type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/octavia/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Octavia/OpenStack_Project_Octavia_vertical.png
 sources:
   - https://opendev.org/openstack/octavia
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - load-balancer
+  - octavia
 maintainers:
   - name: OpenStack-Helm Authors
 
+annotations:
+  krateo.io/category: network
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

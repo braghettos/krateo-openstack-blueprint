@@ -15,15 +15,24 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Trove
 name: trove
+type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/trove/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Trove/OpenStack_Project_Trove_vertical.png
 sources:
   - https://opendev.org/openstack/trove
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - database-as-a-service
+  - trove
 maintainers:
   - name: OpenStack-Helm Authors
 
+annotations:
+  krateo.io/category: database
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

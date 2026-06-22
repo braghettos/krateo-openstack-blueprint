@@ -15,15 +15,24 @@ apiVersion: v2
 appVersion: "2025.1"
 description: Openstack-Helm Swift
 name: swift
+type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/swift/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Swift/OpenStack_Project_Swift_vertical.jpg
 sources:
   - https://opendev.org/openstack/swift
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - object-storage
+  - swift
 maintainers:
   - name: Openstack-Helm Authors
 
+annotations:
+  krateo.io/category: storage
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

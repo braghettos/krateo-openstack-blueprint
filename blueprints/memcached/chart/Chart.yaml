@@ -15,8 +15,18 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Memcached
 name: memcached
+type: application
 version: CHART_VERSION
 home: https://github.com/memcached/memcached
+icon: https://raw.githubusercontent.com/krateoplatformops/krateo/main/docs/media/logo.svg
+keywords:
+  - openstack
+  - cache
+  - memcached
+annotations:
+  krateo.io/category: application
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit
