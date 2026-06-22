@@ -15,15 +15,24 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Watcher
 name: watcher
+type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/watcher/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Watcher/OpenStack_Project_Watcher_vertical.png
 sources:
   - https://opendev.org/openstack/watcher
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - optimization
+  - watcher
 maintainers:
   - name: OpenStack-Helm Authors
 
+annotations:
+  krateo.io/category: application
+  krateo.io/maturity: beta
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

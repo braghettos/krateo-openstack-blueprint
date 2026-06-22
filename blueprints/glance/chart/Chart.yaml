@@ -15,15 +15,24 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Glance
 name: glance
+type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/glance/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Glance/OpenStack_Project_Glance_vertical.png
 sources:
   - https://opendev.org/openstack/glance
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - image
+  - glance
 maintainers:
   - name: OpenStack-Helm Authors
 
+annotations:
+  krateo.io/category: storage
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

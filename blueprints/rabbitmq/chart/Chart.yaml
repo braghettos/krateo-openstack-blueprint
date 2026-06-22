@@ -15,8 +15,18 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm RabbitMQ
 name: rabbitmq
+type: application
 version: CHART_VERSION
 home: https://github.com/rabbitmq/rabbitmq-server
+icon: https://raw.githubusercontent.com/krateoplatformops/krateo/main/docs/media/logo.svg
+keywords:
+  - openstack
+  - messaging
+  - rabbitmq
+annotations:
+  krateo.io/category: application
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

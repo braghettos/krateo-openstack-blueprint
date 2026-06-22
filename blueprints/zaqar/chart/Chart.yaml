@@ -29,6 +29,10 @@ keywords:
 maintainers:
   - name: OpenStack-Helm Team
     email: openstack-helm@lists.openstack.org
+annotations:
+  krateo.io/category: application
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

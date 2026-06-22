@@ -15,15 +15,24 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Cyborg
 name: cyborg
+type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/cyborg
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Cyborg/OpenStack_Project_Cyborg_vertical.png
 sources:
   - https://opendev.org/openstack/cyborg
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - accelerator
+  - cyborg
 maintainers:
   - name: OpenStack-Helm Authors
 
+annotations:
+  krateo.io/category: compute
+  krateo.io/maturity: beta
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

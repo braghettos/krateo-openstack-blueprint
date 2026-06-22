@@ -15,14 +15,23 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm MariaDB
 name: mariadb
+type: application
 version: CHART_VERSION
 home: https://mariadb.com/kb/en/
-icon: http://badges.mariadb.org/mariadb-badge-180x60.png
+icon: https://raw.githubusercontent.com/krateoplatformops/krateo/main/docs/media/logo.svg
 sources:
   - https://github.com/MariaDB/server
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - database
+  - mariadb
 maintainers:
   - name: OpenStack-Helm Authors
+annotations:
+  krateo.io/category: database
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

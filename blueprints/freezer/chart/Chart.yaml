@@ -30,6 +30,9 @@ keywords:
 maintainers:
   - name: OpenStack Helm Team
 annotations:
+  krateo.io/category: application
+  krateo.io/maturity: beta
+  krateoSupportedVersion: ">= 2.5.1"
   "helm.sh/hook-weight": "-5"
 dependencies:
   - name: helm-toolkit

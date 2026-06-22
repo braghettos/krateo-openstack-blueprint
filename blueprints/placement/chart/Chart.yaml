@@ -17,15 +17,24 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Placement
 name: placement
+type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/placement/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Placement/OpenStack_Project_Placement_vertical.png
 sources:
   - https://opendev.org/openstack/placement
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - placement
+  - scheduling
 maintainers:
   - name: OpenStack-Helm Authors
 
+annotations:
+  krateo.io/category: compute
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

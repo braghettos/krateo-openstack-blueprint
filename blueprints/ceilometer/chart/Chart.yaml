@@ -15,14 +15,24 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Ceilometer
 name: ceilometer
+type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/ceilometer/latest/
+icon: https://raw.githubusercontent.com/krateoplatformops/krateo/main/docs/media/logo.svg
 sources:
   - https://opendev.org/openstack/ceilometer
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - telemetry
+  - metering
 maintainers:
   - name: OpenStack-Helm Authors
 
+annotations:
+  krateo.io/category: observability
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

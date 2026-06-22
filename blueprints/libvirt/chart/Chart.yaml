@@ -15,13 +15,23 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm libvirt
 name: libvirt
+type: application
 version: CHART_VERSION
 home: https://libvirt.org
+icon: https://raw.githubusercontent.com/krateoplatformops/krateo/main/docs/media/logo.svg
 sources:
   - https://libvirt.org/git/?p=libvirt.git;a=summary
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - libvirt
+  - hypervisor
 maintainers:
   - name: OpenStack-Helm Authors
+annotations:
+  krateo.io/category: compute
+  krateo.io/maturity: stable
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

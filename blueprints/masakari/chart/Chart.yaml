@@ -15,16 +15,25 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Masakari
 name: masakari
+type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/developer/masakari
-icon: https://www.openstack.org/themes/openstack/images/project-mascots/Masakari/OpenStack_Project_masakari_vertical.png
+icon: https://www.openstack.org/themes/openstack/images/project-mascots/Masakari/OpenStack_Project_Masakari_vertical.png
 sources:
   - https://opendev.org/openstack/masakari
   - https://opendev.org/openstack/masakari-monitors
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - high-availability
+  - masakari
 maintainers:
   - name: OpenStack-Helm Authors
 
+annotations:
+  krateo.io/category: compute
+  krateo.io/maturity: beta
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

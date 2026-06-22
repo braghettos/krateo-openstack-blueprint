@@ -15,15 +15,24 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Cloudkitty
 name: cloudkitty
+type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/cloudkitty/latest/
 icon: https://opendev.org/openstack/cloudkitty/media/branch/master/doc/source/images/cloudkitty-logo.png
 sources:
   - https://opendev.org/openstack/cloudkitty
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - rating
+  - billing
 maintainers:
   - name: OpenStack-Helm Authors
 
+annotations:
+  krateo.io/category: observability
+  krateo.io/maturity: beta
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit

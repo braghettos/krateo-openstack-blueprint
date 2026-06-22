@@ -15,15 +15,24 @@ apiVersion: v2
 appVersion: "2025.1"
 description: OpenStack-Helm Ironic
 name: ironic
+type: application
 version: CHART_VERSION
 home: https://docs.openstack.org/ironic/latest/
 icon: https://www.openstack.org/themes/openstack/images/project-mascots/Ironic/OpenStack_Project_Ironic_vertical.png
 sources:
   - https://opendev.org/openstack/ironic
   - https://opendev.org/openstack/openstack-helm
+keywords:
+  - openstack
+  - baremetal
+  - ironic
 maintainers:
   - name: OpenStack-Helm Authors
 
+annotations:
+  krateo.io/category: compute
+  krateo.io/maturity: beta
+  krateoSupportedVersion: ">= 2.5.1"
 dependencies:
   - name: helm-toolkit
     repository: file://../helm-toolkit
