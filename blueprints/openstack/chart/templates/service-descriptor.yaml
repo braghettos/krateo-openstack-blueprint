@@ -1,0 +1,18 @@
+{{- /*
+The full descriptor is published as a labeled ConfigMap so platform
+components (deep-link rendering, health/usage aggregation, ticket routing)
+can discover this service uniformly, with no OpenStack-specific code.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.serviceContract.service.name }}-service-descriptor
+  labels:
+    krateo.io/service-descriptor: "true"
+    app.kubernetes.io/name: {{ .Values.serviceContract.service.name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    krateo.io/service-contract-version: {{ .Values.serviceContract.version | quote }}
+data:
+  serviceContract.yaml: |
+    {{- toYaml .Values.serviceContract | nindent 4 }}

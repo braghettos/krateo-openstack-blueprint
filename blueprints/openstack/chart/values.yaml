@@ -188,3 +188,145 @@ components:
     deps:
       - keystone
     tier: compute
+
+# ---------------------------------------------------------------------------
+# Service integration descriptor (serviceContract).
+# Uniform, machine-readable declaration of how a management platform wires
+# this service: identity federation, role mapping, capabilities, SSO
+# deep-linking, usage/health emission, tagging and ticketing. Typed in
+# values.schema.json; rendered by templates/capability-*.yaml and
+# templates/service-descriptor.yaml. URLs below are per-deployment defaults —
+# override them in the Composition/platform config for a real installation.
+# ---------------------------------------------------------------------------
+serviceContract:
+  version: v1
+
+  service:
+    name: openstack
+    displayName: OpenStack
+    description: OpenStack IaaS installed and orchestrated on Kubernetes via Krateo blueprints (OpenStack-Helm charts).
+    owner: platform-team
+
+  identity:
+    keycloak:
+      client:
+        clientId: keystone
+        realmRef: org-realm
+        protocol: openid-connect
+      groupsMapper:
+        claim: groups
+        fullPath: false
+
+  roleMapping:
+    - cmpRole: openstack-viewer
+      nativeRole: reader
+      scope: project
+      description: Read-only access to project resources (Keystone default reader role).
+    - cmpRole: openstack-operator
+      nativeRole: member
+      scope: project
+      description: Manage project workloads (Keystone default member role).
+    - cmpRole: openstack-admin
+      nativeRole: admin
+      scope: project
+      description: Full project administration (Keystone default admin role).
+
+  capabilities:
+    - name: view
+      title: View OpenStack installations
+      description: List and inspect OpenStack compositions and their components.
+      enforcement: rbac
+      aggregateTo: [viewer, admin]
+      rules:
+        - apiGroups: ["composition.krateo.io"]
+          resources: ["*"]
+          verbs: ["get", "list", "watch"]
+    - name: provision
+      title: Provision and reconfigure OpenStack
+      enforcement: rbac
+      aggregateTo: [admin]
+      rules:
+        - apiGroups: ["composition.krateo.io"]
+          resources: ["openstacks"]
+          verbs: ["create", "update", "patch"]
+    - name: decommission
+      title: Delete an OpenStack installation
+      description: Destructive operation; requires a step-up authenticated session.
+      enforcement: acr
+      requiresAcr: "urn:krateo:loa:2"
+      aggregateTo: [admin]
+      rules:
+        - apiGroups: ["composition.krateo.io"]
+          resources: ["openstacks"]
+          verbs: ["delete"]
+    - name: compute-tier-guard
+      title: Provision the compute tier only with approval
+      description: The full profile (compute tier) must carry an explicit approval annotation.
+      enforcement: abac
+      aggregateTo: [admin]
+      rules:
+        - apiGroups: ["composition.krateo.io"]
+          resources: ["openstacks"]
+          verbs: ["create", "update"]
+      abac:
+        match:
+          kinds: ["Openstack"]
+        celExpression: >-
+          !has(object.spec.profile) || object.spec.profile != 'full' ||
+          ('openstack.krateo.io/compute-approved' in object.metadata.annotations)
+        message: "Provisioning the compute tier (profile=full) requires the openstack.krateo.io/compute-approved annotation."
+
+  sso:
+    deepLink:
+      urlTemplate: "https://skyline.openstack.example.com/{project}"
+      preRedirect:
+        type: token-rescope
+        endpoint: "https://keystone.openstack.example.com/v3/auth/tokens"
+    logout:
+      mode: oidc-backchannel
+      backchannelLogoutUrl: "https://skyline.openstack.example.com/oidc/backchannel-logout"
+      sessionMaxTtl: 8h
+
+  usage:
+    interval: 5m
+    metrics:
+      - name: instances.count
+        unit: count
+        kind: gauge
+        description: Running Nova instances.
+        dimensions: [flavor]
+      - name: vcpu.used
+        unit: cores
+        kind: gauge
+      - name: vcpu.capacity
+        unit: cores
+        kind: capacity
+      - name: ram.used
+        unit: MiB
+        kind: gauge
+      - name: ram.capacity
+        unit: MiB
+        kind: capacity
+      - name: storage.used
+        unit: GiB
+        kind: gauge
+        dimensions: [volume_type]
+      - name: storage.capacity
+        unit: GiB
+        kind: capacity
+      - name: floating_ips.count
+        unit: count
+        kind: gauge
+
+  health:
+    interval: 1m
+    source:
+      type: adapter
+
+  tagging:
+    native: true
+    remediation: true
+
+  ticketing:
+    category: openstack
+    subcategory: provisioning
