@@ -1,0 +1,41 @@
+{{- /*
+Capabilities with enforcement=abac additionally render a Kyverno
+ClusterPolicy carrying the declared CEL rule (RBAC grants the verb; the
+policy enforces the attribute/conditional part at admission). Rendered only
+when Kyverno is installed so the chart stays installable without it.
+*/ -}}
+{{- if .Capabilities.APIVersions.Has "kyverno.io/v1" }}
+{{- range .Values.serviceContract.capabilities }}
+{{- if eq .enforcement "abac" }}
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: {{ printf "%s-%s" $.Values.serviceContract.service.name .name }}
+  labels:
+    krateo.io/capability: "true"
+    app.kubernetes.io/name: {{ $.Values.serviceContract.service.name }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+  annotations:
+    krateo.io/title: {{ .title | quote }}
+    krateo.io/enforcement: {{ .enforcement | quote }}
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: {{ .name }}
+      match:
+        any:
+          - resources:
+              kinds:
+                {{- toYaml .abac.match.kinds | nindent 16 }}
+      validate:
+        cel:
+          expressions:
+            - expression: {{ .abac.celExpression | quote }}
+              {{- with .abac.message }}
+              message: {{ . | quote }}
+              {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
