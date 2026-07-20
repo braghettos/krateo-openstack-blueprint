@@ -1,0 +1,119 @@
+{{- /*
+Runtime side of the serviceContract usage/health declaration: two CronJobs
+(one per signal) running the stdlib-only emitter in files/contract-emitter.py
+on the interval declared in serviceContract.usage/health. Usage rows land in
+the platform's usage_records table (normalized UsageRecord shape, consumed
+uniformly by dashboards and rating); health rows are the normalized
+OK/Warning/Critical/Unknown signal. Off by default so the chart stays
+installable without a ClickHouse data plane.
+*/ -}}
+{{- if .Values.contractEmitter.enabled }}
+{{- $ce := .Values.contractEmitter }}
+{{- $svc := .Values.serviceContract.service.name }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $svc }}-contract-emitter
+  labels:
+    app.kubernetes.io/name: {{ $svc }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    krateo.io/contract-emitter: "true"
+data:
+  contract-emitter.py: |
+    {{- .Files.Get "files/contract-emitter.py" | nindent 4 }}
+{{- range $mode := tuple "usage" "health" }}
+{{- $decl := index $.Values.serviceContract $mode }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $svc }}-emit-{{ $mode }}
+  labels:
+    app.kubernetes.io/name: {{ $svc }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+    krateo.io/contract-emitter: "true"
+spec:
+  schedule: {{ include "osh.cronFromInterval" $decl.interval | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 300
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: {{ $svc }}
+            krateo.io/contract-emitter: "true"
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: emit-{{ $mode }}
+              image: {{ $ce.image }}
+              imagePullPolicy: {{ $ce.imagePullPolicy }}
+              command: ["python3", "/opt/emitter/contract-emitter.py"]
+              envFrom:
+                # OpenStack-Helm admin openrc secret (OS_AUTH_URL, OS_USERNAME,
+                # OS_PASSWORD, OS_PROJECT_NAME, OS_*_DOMAIN_NAME, OS_REGION_NAME).
+                - secretRef:
+                    name: {{ $ce.openstack.existingSecret }}
+              env:
+                - name: MODE
+                  value: {{ $mode | quote }}
+                - name: ORG
+                  value: {{ $ce.org | quote }}
+                - name: SERVICE_NAME
+                  value: {{ $svc | quote }}
+                - name: INTERVAL
+                  value: {{ $decl.interval | quote }}
+                - name: OS_INTERFACE
+                  value: {{ $ce.openstack.interface | quote }}
+                - name: TLS_VERIFY
+                  value: {{ $ce.openstack.tlsVerify | quote }}
+                {{- with $ce.openstack.authUrl }}
+                - name: OS_AUTH_URL   # overrides the secret's value when set
+                  value: {{ . | quote }}
+                {{- end }}
+                {{- with $ce.openstack.region }}
+                - name: OS_REGION_NAME
+                  value: {{ . | quote }}
+                {{- end }}
+                - name: CH_URL
+                  value: {{ $ce.clickhouse.url | quote }}
+                - name: CH_DATABASE
+                  value: {{ $ce.clickhouse.database | quote }}
+                - name: CH_USAGE_TABLE
+                  value: {{ $ce.clickhouse.usageTable | quote }}
+                - name: CH_HEALTH_TABLE
+                  value: {{ $ce.clickhouse.healthTable | quote }}
+                - name: CH_BOOTSTRAP_HEALTH_TABLE
+                  value: {{ $ce.clickhouse.bootstrapHealthTable | quote }}
+                {{- if $ce.clickhouse.existingSecret }}
+                - name: CH_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ $ce.clickhouse.existingSecret }}
+                      key: username
+                      optional: true
+                - name: CH_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ $ce.clickhouse.existingSecret }}
+                      key: password
+                      optional: true
+                {{- end }}
+              volumeMounts:
+                - name: emitter
+                  mountPath: /opt/emitter
+                  readOnly: true
+              {{- with $ce.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+          volumes:
+            - name: emitter
+              configMap:
+                name: {{ $svc }}-contract-emitter
+{{- end }}
+{{- end }}

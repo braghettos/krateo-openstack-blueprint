@@ -5,3 +5,5 @@
 *.log
 kubeconfig
 .claude/
+__pycache__/
+*.pyc
