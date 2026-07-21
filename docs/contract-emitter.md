@@ -41,14 +41,14 @@ uniformly by dashboards and rating engines):
 
 | column | value |
 |---|---|
-| `record_id` | deterministic hash of (service, metric, resource, window) — re-runs in the same window replace, never duplicate |
+| `record_id` | showback's `deterministicID(org, tenant, service, resource, metric, window)` — sha256 over NUL-terminated parts, first 32 hex chars. Re-runs in the same window replace, never duplicate, and a direct insert carries the same id showback would compute on API ingest |
 | `org` | `contractEmitter.org` |
 | `tenant` | Keystone project name (empty for org-level capacity) |
 | `service` | `serviceContract.service.name` |
 | `resource_id` | project id / `hypervisors` / `cinder-pools` |
 | `metric`, `quantity`, `unit` | as declared in `serviceContract.usage.metrics` |
 | `window_start`, `window_end` | interval-aligned UTC window |
-| `tags` | the Keystone **project tags** (tag governance / per-tag showback) |
+| `tags` | the Keystone **project tags**, split on the first `:` into real key→value Map entries (`env:prod` → `{env: prod}`) so per-tag `GROUP BY` works; a bare tag without `:` falls back to `{tag: ""}` |
 | `source` | `openstack-blueprint` |
 
 Collectors (all best-effort — a missing service skips its metrics):
@@ -74,6 +74,20 @@ A consolidated `_service` row (worst component wins) gives aggregators a
 single per-service signal. Rows land in `<database>.health_records`
 (`CREATE TABLE IF NOT EXISTS` bootstrap is on by default,
 `clickhouse.bootstrapHealthTable`).
+
+## Conformance test
+
+`tests/test_contract_emitter.py` (stdlib `unittest`, fully offline) runs
+`collect_usage`/`collect_health` against mocked OpenStack API responses and
+asserts row shape against the showback `usage_records` schema, the
+showback-aligned deterministic `record_id`, `key:value` tag splitting and
+the exact health enum — including the worst-wins `_service` consolidation
+and same-window idempotency. It runs on every PR via
+`.github/workflows/lint.yaml`:
+
+```console
+$ python3 -m unittest discover -s tests -v
+```
 
 ## SSO deep-link resolution
 

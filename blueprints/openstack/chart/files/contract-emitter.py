@@ -15,9 +15,11 @@ Emits the two runtime signals the service integration contract
                "_service" row (worst component wins).
 
 Both are written to ClickHouse over the HTTP interface as JSONEachRow
-inserts. record_id is a deterministic hash of (service, metric/component,
-resource, window), so re-runs inside the same window are idempotent
-(ReplacingMergeTree replaces, never duplicates).
+inserts. record_id reproduces showback's deterministicID(org, tenant,
+service, resource, metric, window) byte-for-byte (sha256 over
+NUL-terminated parts, first 32 hex chars), so re-runs inside the same
+window are idempotent (ReplacingMergeTree replaces, never duplicates) and
+a record inserted directly gets the same id showback would compute for it.
 
 Stdlib-only on purpose: runs on a plain python:3-alpine image.
 Configuration is environment-only (see templates/contract-emitter.yaml).
@@ -49,6 +51,37 @@ def parse_interval(s):
 
 def fmt(ts):
     return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(ts))
+
+
+def fmt_rfc3339(ts):
+    """UTC RFC3339 ('2026-01-02T15:04:05Z') - the exact string showback's
+    deterministicID hashes for window_start (Go time.RFC3339Nano renders
+    whole seconds without a fractional part)."""
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ts))
+
+
+def deterministic_id(*parts):
+    """showback's deterministicID: sha256 over NUL-terminated parts, first
+    32 hex chars. Call with (org, tenant, service, resource, metric,
+    window) so a row inserted directly into ClickHouse and the same logical
+    record ingested through the showback API converge on one record_id."""
+    h = hashlib.sha256()
+    for p in parts:
+        h.update(p.encode())
+        h.update(b"\x00")
+    return h.hexdigest()[:32]
+
+
+def split_tags(raw):
+    """Keystone project tags are flat strings; the platform convention is
+    'key:value'. Split on the first ':' into real key->value Map entries so
+    per-tag GROUP BY (showback by-tag rollups, tag governance) works.
+    Documented fallback: a bare tag without ':' becomes {tag: ''}."""
+    tags = {}
+    for t in raw:
+        k, sep, v = t.partition(":")
+        tags[k] = v if sep else ""
+    return tags
 
 
 def ssl_context(url):
@@ -131,9 +164,7 @@ def collect_usage(auth_url, token, catalog):
     rows = []
 
     def row(metric, qty, unit, resource_id, tenant, tags=None):
-        rid = hashlib.sha256(
-            "|".join([SERVICE, metric, resource_id, str(wstart)]).encode()
-        ).hexdigest()[:32]
+        rid = deterministic_id(ORG, tenant, SERVICE, resource_id, metric, fmt_rfc3339(wstart))
         rows.append({
             "record_id": rid,
             "org": ORG,
@@ -167,7 +198,7 @@ def collect_usage(auth_url, token, catalog):
 
     for p in projects:
         pid, name = p["id"], p["name"]
-        tags = {t: "" for t in p.get("tags", [])}
+        tags = split_tags(p.get("tags", []))
         if nova:
             try:
                 ab = get_json(f"{nova}/limits?tenant_id={pid}", token)["limits"]["absolute"]
@@ -237,9 +268,10 @@ def collect_health(auth_url, token, catalog):
     rows = []
 
     def row(component, status, reason):
-        rid = hashlib.sha256(
-            "|".join([SERVICE, component, str(wstart)]).encode()
-        ).hexdigest()[:32]
+        # Same deterministic scheme as usage rows (tenant is always "" for
+        # health): org-qualified, so two orgs emitting the same service
+        # into one table never collide.
+        rid = deterministic_id(ORG, "", SERVICE, component, fmt_rfc3339(wstart))
         rows.append({
             "record_id": rid,
             "org": ORG,
