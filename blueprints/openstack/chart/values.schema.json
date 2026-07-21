@@ -2176,6 +2176,97 @@
         }
       },
       "description": "Service integration descriptor (contract v1): identity federation, role mapping, capabilities, SSO deep-link, usage/health, tagging, ticketing. Chart defaults are authoritative; deployments override only environment-specific fields (URLs, realm)."
+    },
+    "contractEmitter": {
+      "type": "object",
+      "title": "Contract emitter (runtime usage/health emission)",
+      "description": "Runtime side of serviceContract.usage/health: CronJobs polling the OpenStack APIs on the declared intervals and writing normalized UsageRecord / health rows to ClickHouse over its HTTP interface. Disabled by default.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "imagePullPolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        },
+        "org": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Organization stamped on every emitted record (platform-injected)."
+        },
+        "openstack": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "existingSecret": {
+              "type": "string",
+              "minLength": 1,
+              "description": "OpenStack-Helm admin openrc secret (OS_* keys)."
+            },
+            "authUrl": {
+              "type": "string",
+              "description": "Overrides the secret's OS_AUTH_URL when set."
+            },
+            "region": {
+              "type": "string"
+            },
+            "interface": {
+              "type": "string",
+              "enum": [
+                "internal",
+                "public",
+                "admin"
+              ]
+            },
+            "tlsVerify": {
+              "type": "boolean"
+            }
+          }
+        },
+        "clickhouse": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "url": {
+              "type": "string",
+              "pattern": "^https?://"
+            },
+            "database": {
+              "type": "string",
+              "minLength": 1
+            },
+            "usageTable": {
+              "type": "string",
+              "minLength": 1
+            },
+            "healthTable": {
+              "type": "string",
+              "minLength": 1
+            },
+            "bootstrapHealthTable": {
+              "type": "boolean"
+            },
+            "existingSecret": {
+              "type": "string",
+              "description": "Optional secret with keys: username, password."
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "description": "Kubernetes resource requests/limits for the emitter container."
+        }
+      }
     }
   },
   "definitions": {

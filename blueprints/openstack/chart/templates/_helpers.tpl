@@ -1,3 +1,20 @@
+{{/* Cron schedule from a contract interval ("30s" | "5m" | "2h"). Sub-minute
+     intervals round up to every minute (cron's floor); minute intervals >= 60
+     clamp to hourly. Keeps the serviceContract usage/health interval the single
+     source of truth for the emitter CronJobs. */}}
+{{- define "osh.cronFromInterval" -}}
+{{- $i := . | toString -}}
+{{- if hasSuffix "h" $i -}}
+{{- $n := trimSuffix "h" $i | int -}}
+{{- if le $n 1 -}}0 * * * *{{- else -}}0 */{{ $n }} * * *{{- end -}}
+{{- else if hasSuffix "m" $i -}}
+{{- $n := trimSuffix "m" $i | int -}}
+{{- if le $n 1 -}}* * * * *{{- else if ge $n 60 -}}0 * * * *{{- else -}}*/{{ $n }} * * * *{{- end -}}
+{{- else -}}
+* * * * *
+{{- end -}}
+{{- end -}}
+
 {{/* The composition.krateo.io apiVersion served by the component CRDs, derived
      from chartVersion (crdgen maps version 0.1.1 -> apiVersion v0-1-1). Keeping
      this in one place means a version bump never strands a hardcoded v0-1-0. */}}

@@ -330,3 +330,43 @@ serviceContract:
   ticketing:
     category: openstack
     subcategory: provisioning
+
+# ---------------------------------------------------------------------------
+# Contract emitter: the runtime side of serviceContract.usage/health.
+# Two CronJobs (templates/contract-emitter.yaml) poll the OpenStack APIs on
+# the declared intervals and write normalized UsageRecord / health rows to
+# ClickHouse over its HTTP interface (files/contract-emitter.py, stdlib-only).
+# Disabled by default so the chart stays installable without a ClickHouse
+# data plane; the management platform enables it and points it at its own.
+# ---------------------------------------------------------------------------
+contractEmitter:
+  enabled: false
+  image: python:3.12-alpine
+  imagePullPolicy: IfNotPresent
+  # org stamped on every emitted record (platform-injected per installation).
+  org: default
+  openstack:
+    # OpenStack-Helm admin openrc secret (OS_AUTH_URL, OS_USERNAME, OS_PASSWORD,
+    # OS_PROJECT_NAME, OS_USER_DOMAIN_NAME, OS_PROJECT_DOMAIN_NAME, ...),
+    # created by the keystone component (secrets.identity.admin).
+    existingSecret: keystone-keystone-admin
+    # authUrl overrides the secret's OS_AUTH_URL when set (leave empty to use it).
+    authUrl: ""
+    # region filters catalog endpoints when set (defaults to the secret's).
+    region: ""
+    # interface: which catalog endpoints to use and probe (internal|public|admin).
+    interface: internal
+    tlsVerify: true
+  clickhouse:
+    url: http://clickhouse.krateo-system.svc.cluster.local:8123
+    database: krateo
+    # usage_records is owned by the platform's rating engine DDL (UsageRecord shape).
+    usageTable: usage_records
+    healthTable: health_records
+    # create the health table if missing (idempotent CREATE TABLE IF NOT EXISTS).
+    bootstrapHealthTable: true
+    # optional secret with keys: username, password.
+    existingSecret: ""
+  resources:
+    requests: {cpu: 10m, memory: 32Mi}
+    limits: {cpu: 100m, memory: 128Mi}

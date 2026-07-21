@@ -52,4 +52,23 @@ jobs:
           done
           # the umbrella orchestrator must render under the full profile
           helm template osh blueprints/openstack/chart --namespace openstack --set profile=full > /dev/null
+          # ... and with the contract emitter on (same determinism bar)
+          helm template osh blueprints/openstack/chart --namespace openstack --set contractEmitter.enabled=true > /tmp/e1.yaml
+          helm template osh blueprints/openstack/chart --namespace openstack --set contractEmitter.enabled=true > /tmp/e2.yaml
+          diff /tmp/e1.yaml /tmp/e2.yaml
+          grep -q 'kind: CronJob' /tmp/e1.yaml || { echo "::error::contract emitter CronJobs did not render"; exit 1; }
           exit $fail
+
+      - name: Contract emitter script compiles
+        run: python3 -m py_compile blueprints/openstack/chart/files/contract-emitter.py
+
+      - name: Contract emitter conformance (mocked OpenStack e2e vs showback schema)
+        # collect_usage/collect_health against canned API responses; asserts
+        # usage_records row shape, showback-aligned deterministic record_id,
+        # key:value tag splitting and the exact health enum. Stdlib-only.
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Service-contract SSO deep-link template resolves
+        run: |
+          url="$(tools/resolve-deeplink.sh --from-chart --org org-a --tenant tenant-1 --namespace ns-1 --project proj-1)"
+          echo "resolved: $url"
